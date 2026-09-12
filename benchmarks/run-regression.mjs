@@ -376,7 +376,7 @@ function roadmapDecisionIndex(tempVault, slug, limitThreads = 10) {
 function assertBuiltIndex(index, slug, fixtureId) {
   assert(index.schema_version === 'tracework.decision_replay.v1', `${fixtureId}: bad index schema`);
   assert(index.project_slug === slug, `${fixtureId}: bad project slug`);
-  assert(index.source?.builder_version === 2, `${fixtureId}: bad decision index builder version`);
+  assert(index.source?.builder_version === 3, `${fixtureId}: bad decision index builder version`);
   assert(Array.isArray(index.nodes), `${fixtureId}: index nodes must be an array`);
   assert(Array.isArray(index.edges), `${fixtureId}: index edges must be an array`);
   assertSourceRefs(index.nodes, fixtureId);

@@ -6,7 +6,25 @@ handoffs, activity inventories, or substitutes for the raw record.
 
 ## Scope Before Selection
 
-Resolve the reporting scope before ranking work:
+Before reading report material, run the bundled resolver:
+
+```bash
+python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report
+```
+
+Pass `--scope <group-or-all>` only when the user explicitly selected it.
+Use the returned `scope`, `scope_source`, and `reason`; do not substitute `work`.
+Precedence is explicit user scope → configured `profile.default_reporting_group`
+→ current project's group (project config, then matching registry) → unresolved.
+Configuration merges project over global values as usual. An unresolved report
+returns `scope=local`, `scope_source=implicit-local`: current project only,
+conversation output, no files. A named group literally called `local` remains
+an exact group when its source is explicit/configured/project.
+For Capture Day, use `--purpose session`; unresolved scope is null and must stop
+before list/collect or transcript reads. This resolver reads configuration and
+registry metadata only; it does not authorize reading other projects.
+
+Partition the resolved scope before ranking work:
 
 - `<group>`: include only projects whose `reporting_group` exactly matches the
   requested group, commonly `work` or `personal`.
@@ -26,8 +44,8 @@ or **configured** via that default, unassigned projects stay excluded and must
 never be guessed into the scoped report.
 
 When no explicit group and no configured default are present, Daily, Weekly, and Monthly
-use skill-level first-run rules instead of silently defaulting unassigned work
-into `work`: report the current unassigned repository as a `local` lane, label
+use the current project's assigned group when available. Otherwise report
+the current unassigned repository as a `local` lane, label
 it clearly, and keep workplace audience safety intact. An explicit `all`
 request remains the private combined view with separate group sections.
 

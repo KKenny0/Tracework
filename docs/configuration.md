@@ -36,10 +36,13 @@ Resolution order:
 selects headlines. Recommended values are `work` and `personal`; other stable
 values such as `open-source` or `consulting` are valid.
 
-`profile.default_reporting_group` selects the default report scope. `work` is
-the safest default because personal project material must never leak into a
-workplace report. Explicit `all` produces a private combined view with separate
-group sections.
+Scope resolves identically for reports and Capture Day: explicit user choice,
+then `profile.default_reporting_group`, then the current project's group
+(project config before matching registry). No assigned group means a
+conversation-only `local` report; Capture Day stops before reading transcripts.
+No helper silently defaults to `work`. Exact groups exclude unassigned
+projects, including when selected by configuration. Explicit `all` produces
+a private combined view with separate group sections.
 
 The project registry mirrors the group:
 

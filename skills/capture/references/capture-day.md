@@ -13,7 +13,9 @@ Claude sessions after the user explicitly asks to scan a date.
 ```
 
 - Date defaults to the local calendar date.
-- Scope defaults to `profile.default_reporting_group`, then `work`.
+- Resolve scope with the bundled helper below: explicit user choice, then
+  `profile.default_reporting_group`, then the current project's assigned group.
+- If unresolved, explain the missing group and stop without reading transcripts.
 - Accept an exact reporting-group name or private `all`.
 - `session_scan.enabled` must be `true`; otherwise explain how to opt in and do
   not inspect host transcript directories directly.
@@ -38,12 +40,21 @@ uses the hook manifest's `cwd_history` to resolve the nearest project
 
 ## Collect Normalized Material
 
-First list candidate manifests without reading transcript content:
+First resolve scope without reading transcript content:
+
+```bash
+python <this-skill>/scripts/tracework_raw.py resolve-scope \
+  --cwd <project-root> --purpose session
+```
+
+Add `--scope <group-or-all>` only for an explicit user choice. If `scope` is
+null, do not call list/collect. Otherwise pass the returned scope explicitly
+to both commands (neither has a default). Then list candidate manifests:
 
 ```bash
 python <this-skill>/scripts/tracework_sessions.py list-day \
   --date YYYY-MM-DD \
-  --scope work
+  --scope <resolved-scope>
 ```
 
 Then collect one bounded chunk from each returned session:
@@ -51,7 +62,7 @@ Then collect one bounded chunk from each returned session:
 ```bash
 python <this-skill>/scripts/tracework_sessions.py collect-session \
   --date YYYY-MM-DD \
-  --scope work \
+  --scope <resolved-scope> \
   --runtime codex \
   --session-id <id> \
   --chunk 1

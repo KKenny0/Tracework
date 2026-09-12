@@ -47,9 +47,9 @@ Outputs:
 ### 1. Resolve Month, Scope, and Output
 
 - Parse the requested month; default to the current month through today.
-- Explicit `all` or a named group wins, then `profile.default_reporting_group`.
-  Otherwise use the current project's group. With no assigned group, use only
-  the current repository as `local` / unassigned, never as `work`.
+- Run `python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report`
+  using the shared reporting contract; add `--scope` only for an explicit user
+  choice. Use `scope_source=implicit-local` for conversation-only local fallback.
 - For an explicit/configured group, include only matching projects; exclude
   unassigned projects and explain an empty result with a configuration hint.
 - `all` remains a private view with separate complete group sections.

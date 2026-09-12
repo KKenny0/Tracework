@@ -85,6 +85,8 @@ Return a concise answer with:
 - A direct answer when `answerable=true`.
 - The matched decision node ids and source timestamps.
 - `matched_terms`, `evidence_strength`, and `answerability_reason`.
+- `evidence_boundary`, `impact_boundary`, and any `missing_evidence`, even
+  when the recorded decision is answerable.
 - `source_entry_refs` for every cited decision.
 - Direct evidence fields (`evidence_refs`, `source_refs`, and
   `direct_artifact_refs` source-of-truth evidence)
@@ -104,15 +106,21 @@ evidence. Include `missing_evidence` and suggest capturing the decision with
 - Treat `confidence=inferred` as useful navigation, not a proven fact.
 - Treat `source_entry_refs` as provenance: they prove where Tracework recorded a
   claim, not that the claim's outcome was independently verified.
-- Treat `evidence_refs`, typed `source_refs`, and `direct_artifact_refs` as
-  direct evidence. General `artifact_refs` are navigation hints unless the raw
+- Treat `evidence_refs`, supporting typed `source_refs`, and `direct_artifact_refs`
+  as references to inspect, not fresh verification. `conversation` records
+  provenance; `repository_snapshot` locates a revision. Neither alone verifies
+  an outcome. General `artifact_refs` are navigation hints unless the raw
   entry explicitly marked them source-of-truth. Preserve both kinds so readers
   can drill down without overstating verification.
 - Treat artifact dossier fields from `{vault}/raw/artifacts/{slug}.json` as
   navigation plus recorded context. `artifact_summary.key_claims` can explain
   what a linked artifact was believed to cover, but only
-  `evidence_boundary: direct_evidence`, raw `artifact_context.source_of_truth`,
-  `evidence_refs`, or typed `source_refs` can strengthen verification.
+  references explicitly in raw may support its declared verification boundary.
+- Carry raw `reporting.evidence_boundary` and `reporting.impact_boundary`.
+  Legacy explicit entries default to `recorded`; inferred entries to `limited`.
+  `strong` requires a well-matched explicit decision, a valid `verified`
+  boundary, and supporting references. Impact queries also require `observed`.
+  A reference alone never upgrades a recorded claim. Preserve evidence gaps.
 - Treat `evidence_strength=weak` as a prompt to hedge or ask for more evidence
   even when `answerable=true`.
 - An explicit, well-matched raw entry without direct evidence remains

@@ -46,11 +46,11 @@ durable multi-day storage and strict audience partition, not a ticket to try.
 
 ### Scope resolution
 
-1. If the user explicitly names `all` or an exact reporting group such as
-   `work` or `personal`, that scope is **explicit**.
-2. Else if `profile.default_reporting_group` is configured, that scope is
-   **configured**.
-3. Else the scope is **implicit**.
+Run `python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report`
+as defined in `references/reporting-narrative-contract.md`; add `--scope` only
+for an explicit user choice. Use its `scope`, `scope_source`, and `reason`.
+An assigned current-project group is a normal exact-group scope;
+`scope_source=implicit-local` activates local first-run below.
 
 ### Partition rules
 
@@ -65,7 +65,7 @@ durable multi-day storage and strict audience partition, not a ticket to try.
 
 - **Implicit** scope (no explicit group, no configured default):
   - If the current project has a `reporting_group`, use that group.
-  - If the current project is `unassigned` or has no project config, enter
+  - If the resolver returns `scope_source=implicit-local`, enter
     **local first-run**:
     - Report only the current repository.
     - Label scope `local` (unassigned). Do not label it `work`.

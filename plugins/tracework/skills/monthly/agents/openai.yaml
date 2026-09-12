@@ -1,4 +1,4 @@
 interface:
   display_name: "Tracework Monthly"
   short_description: "Create a raw-first scoped monthly management review"
-  default_prompt: "Use $monthly to create a work-scoped raw-first monthly review, using Daily and Weekly only as prior human judgments and keeping evidence in appendices."
+  default_prompt: "Use $monthly to create a scoped raw-first monthly review, using Daily and Weekly only as prior human judgments and keeping evidence in appendices."

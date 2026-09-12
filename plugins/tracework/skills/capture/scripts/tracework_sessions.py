@@ -185,7 +185,8 @@ def profile_for_cwd(cwd: Path) -> dict[str, Any]:
         return {"reporting_group": "unassigned", "cwd": str(cwd)}
     root = project_config.parent.parent.resolve()
     profile = cfg.get("profile") if isinstance(cfg.get("profile"), dict) else {}
-    group = profile.get("reporting_group")
+    project_profile = tracework_raw.load_yaml_config(project_config).get("profile", {})
+    group = project_profile.get("reporting_group") if isinstance(project_profile, dict) else None
     if not isinstance(group, str) or not group.strip():
         group = "unassigned"
     slug = cfg.get("project_slug")
@@ -562,11 +563,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_parser = subparsers.add_parser("list-day", help="List scoped session manifests without reading transcripts")
     list_parser.add_argument("--date", default=dt.date.today().isoformat())
-    list_parser.add_argument("--scope", default="work")
+    list_parser.add_argument("--scope", required=True)
 
     collect = subparsers.add_parser("collect-session", help="Return one bounded normalized transcript chunk")
     collect.add_argument("--date", default=dt.date.today().isoformat())
-    collect.add_argument("--scope", default="work")
+    collect.add_argument("--scope", required=True)
     collect.add_argument("--runtime", required=True, choices=("codex", "claude"))
     collect.add_argument("--session-id", required=True)
     collect.add_argument("--chunk", type=int, default=1)

@@ -31,7 +31,7 @@ claude plugin install tracework@tracework
 也可以先写今天：`写日报` / `/tracework:daily`。
 
 不配置 vault 也能先在对话里看到结果。当前项目尚未分组时，隐式试用会按 `local`
-出当前仓库报告，而不会假装成安全的 `work` 汇报；只有显式写 `work` 时才会排除
+出当前仓库报告，而不会假装成安全的 `work` 汇报；显式或默认配置选择 `work` 时会排除
 未分组项目并提示修复。没有 raw 记录时，报告会尽量使用有意义的 git 活动，并标成
 `limited`：不会补造动机、决策或已验证影响。
 

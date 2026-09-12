@@ -1,4 +1,4 @@
 interface:
   display_name: "Tracework Weekly"
   short_description: "Turn the week into an objective-anchored management judgment"
-  default_prompt: "Use $weekly to create a work-scoped weekly brief from Tracework raw entries: recover the goal source, keep only management-changing information in the body, and preserve commitment accounting, work coverage, and claim evidence in the appendix."
+  default_prompt: "Use $weekly to create a scoped weekly brief from Tracework raw entries: recover the goal source, keep only management-changing information in the body, and preserve commitment accounting, work coverage, and claim evidence in the appendix."

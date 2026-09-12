@@ -644,7 +644,7 @@
         "project_slug": "storyboard-pipeline",
         "query": "why validation repair ownership",
         "mode": "why",
-        "expected_top_node": "storyboard-pipeline:2026-W19:003",
+        "expected_top_node": "raw:storyboard-pipeline:2026-W19:0",
         "expected_matched_terms": [
           "validation",
           "repair",
@@ -685,7 +685,7 @@
         "project_slug": "storyboard-pipeline",
         "query": "why retry budget policy",
         "mode": "why",
-        "expected_top_node": "storyboard-pipeline:2026-W20:005",
+        "expected_top_node": "raw:storyboard-pipeline:2026-W20:0",
         "expected_thread_id": "thread:retry-budget-policy",
         "expected_topic_key_prefix": [
           "retry-budget-policy"
@@ -725,7 +725,7 @@
         "project_slug": "storyboard-pipeline",
         "query": "why stale architecture docs recall risk",
         "mode": "why",
-        "expected_top_node": "storyboard-pipeline:2026-W19:004",
+        "expected_top_node": "raw:storyboard-pipeline:2026-W19:1",
         "expected_matched_terms": [
           "stale",
           "architecture",
@@ -734,7 +734,7 @@
           "risk"
         ],
         "expected_evidence_strength": "weak",
-        "expected_missing_evidence_text": "lacks direct evidence_refs"
+        "expected_missing_evidence_text": "lacks independent verification"
       },
       "expected_behavior": "An explicit raw decision signal remains answerable through source-entry provenance when no direct evidence is attached, but it is never labeled strong and the evidence gap remains visible.",
       "assertions": [
@@ -786,14 +786,14 @@
         ],
         "query": "修复责任为什么保留在验证阶段",
         "mode": "why",
-        "expected_top_node": "cjk-query:2026-W24:001",
+        "expected_top_node": "raw:cjk-query:2026-W24:0",
         "expected_matched_terms": [
           "修复",
           "责任",
           "验证",
           "阶段"
         ],
-        "expected_evidence_strength": "strong",
+        "expected_evidence_strength": "weak",
         "expected_evidence_ref": "doc:validation-ownership-cn",
         "expected_supporting_decision_absent": "移动同步采用本地数据库索引"
       },
@@ -890,7 +890,7 @@
         "project_slug": "storyboard-pipeline",
         "query": "why validation repair ownership",
         "mode": "why",
-        "expected_top_node": "storyboard-pipeline:2026-W19:003"
+        "expected_top_node": "raw:storyboard-pipeline:2026-W19:0"
       },
       "expected_behavior": "`/tracework:query` rebuilds from raw weekly entries when the saved derived index is invalid JSON or older than the latest raw entry.",
       "assertions": [
@@ -915,7 +915,7 @@
         "fixture_preset": "storyboard-pipeline-decision-replay",
         "project_slug": "storyboard-pipeline",
         "limit": 5,
-        "expected_decision_id": "storyboard-pipeline:2026-W19:003"
+        "expected_decision_id": "raw:storyboard-pipeline:2026-W19:0"
       },
       "expected_behavior": "When `{vault}/raw/decisions/{slug}.json` is missing, recall rebuilds decision context from weekly raw entries, writes the derived decision replay index, and reports `decision_context_source` with path, `rebuilt=true`, and a reason. A subsequent run should reuse the fresh index with `rebuilt=false`.",
       "assertions": [
@@ -949,8 +949,8 @@
         "expected_thread_node_count": 2,
         "expected_thread_confidence": "mixed",
         "expected_thread_decision_ids": [
-          "storyboard-pipeline:2026-W18:001",
-          "storyboard-pipeline:2026-W19:003"
+          "raw:storyboard-pipeline:2026-W18:0",
+          "raw:storyboard-pipeline:2026-W19:0"
         ],
         "expected_rejected_option": "Orchestration-level repair ownership",
         "expected_open_question_text": "repair-loop latency",

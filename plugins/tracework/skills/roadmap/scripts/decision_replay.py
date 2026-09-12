@@ -10,12 +10,15 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import difflib
+import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import sys
 from typing import Any
+
+from tracework_raw import write_json_atomic
 
 try:
     import yaml  # type: ignore
@@ -26,7 +29,7 @@ except Exception:  # pragma: no cover - optional dependency
 SCHEMA_VERSION = "tracework.decision_replay.v1"
 QUERY_SCHEMA_VERSION = "tracework.decision_query.v1"
 ROADMAP_SCHEMA_VERSION = "tracework.decision_roadmap.v1"
-INDEX_BUILDER_VERSION = 2
+INDEX_BUILDER_VERSION = 3
 SAFE_SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 EXPLICIT_FIELDS = (
     "motivation",
@@ -299,8 +302,13 @@ def has_explicit_decision_signal(entry: dict[str, Any]) -> bool:
     return any(as_string_list(entry.get(field)) or text_value(entry, field) for field in EXPLICIT_FIELDS)
 
 
-def entry_ref(entry: dict[str, Any]) -> dict[str, Any]:
+def stable_entry_id(slug: str, entry: dict[str, Any]) -> str:
+    return f"raw:{slug}:{entry['_source_week']}:{entry['_source_index']}"
+
+
+def entry_ref(entry: dict[str, Any], slug: str) -> dict[str, Any]:
     return {
+        "entry_id": stable_entry_id(slug, entry),
         "week": entry["_source_week"],
         "path": entry["_source_path"],
         "timestamp": entry.get("timestamp"),
@@ -523,7 +531,7 @@ def rejected_paths(entry: dict[str, Any]) -> list[dict[str, str]]:
 
 
 def node_from_entry(
-    entry: dict[str, Any], ordinal: int, slug: str, artifacts: list[dict[str, Any]]
+    entry: dict[str, Any], slug: str, artifacts: list[dict[str, Any]]
 ) -> dict[str, Any]:
     artifact_ids, artifact_thread_hints = artifact_hints_for_entry(entry, artifacts)
     artifact_refs = dedupe([*artifact_refs_from_entry(entry), *artifact_ids])
@@ -535,18 +543,28 @@ def node_from_entry(
     decision_threads = as_string_list(entry.get("decision_threads"))
     source_refs = as_object_list(entry.get("source_refs"))
     lifecycle_transition = as_object(entry.get("lifecycle_transition"))
+    reporting = as_object(entry.get("reporting")) or {}
+    boundary = reporting.get("evidence_boundary", "recorded")
+    if not explicit or not isinstance(boundary, str) or boundary not in {"verified", "recorded", "limited"}:
+        boundary = "limited"
+    impact_boundary = reporting.get("impact_boundary", "unknown")
+    if not isinstance(impact_boundary, str) or impact_boundary not in {"observed", "expected", "unknown"}:
+        impact_boundary = "unknown"
     inference_notes = []
     if not explicit:
         inference_notes.append("Decision content inferred from summary/context because explicit decision fields were sparse.")
     node = {
-        "id": f"{slug}:{week}:{ordinal:03d}",
+        "id": stable_entry_id(slug, entry),
         "timestamp": entry.get("timestamp"),
         "week": week,
         "entry_type": entry.get("type"),
         "archetype": entry.get("archetype"),
         "status": entry.get("status"),
         "confidence": "explicit" if explicit else "inferred",
-        "source_entry_refs": [entry_ref(entry)],
+        "source_entry_refs": [entry_ref(entry, slug)],
+        "evidence_boundary": boundary,
+        "impact_boundary": impact_boundary,
+        "evidence_gap": reporting.get("evidence_gap"),
         "summary": text_value(entry, "summary") or "Untitled raw entry",
         "decision": text_value(entry, "summary") or "Untitled raw entry",
         "why": why,
@@ -564,6 +582,8 @@ def node_from_entry(
         "thread_id": thread_id_for(keys, entry),
         "inference_notes": inference_notes,
     }
+    if boundary == "verified" and not has_direct_evidence(node):
+        node["evidence_boundary"] = "recorded"
     return node
 
 
@@ -574,7 +594,7 @@ def build_nodes(
     for entry in entries:
         if not isinstance(entry.get("summary"), str) or not isinstance(entry.get("context"), str):
             continue
-        nodes.append(node_from_entry(entry, len(nodes) + 1, slug, artifacts))
+        nodes.append(node_from_entry(entry, slug, artifacts))
     return nodes
 
 
@@ -655,12 +675,34 @@ def latest_entry_datetime(entries: list[dict[str, Any]]) -> dt.datetime | None:
     return max(parsed) if parsed else None
 
 
-def index_is_current(index: dict[str, Any], entries: list[dict[str, Any]]) -> bool:
+def input_fingerprint(entries: list[dict[str, Any]], artifacts: list[dict[str, Any]]) -> str:
+    payload = json.dumps([entries, artifacts], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def missing_raw_sources(index: dict[str, Any], entries: list[dict[str, Any]], paths: list[str]) -> bool:
+    source = as_object(index.get("source")) or {}
+    expected = {(Path(p).parent.name, Path(p).name) for p in as_string_list(source.get("raw_paths"))}
+    present = {(Path(p).parent.name, Path(p).name) for p in paths}
+    count = source.get("raw_entry_count", len(as_object_list(index.get("nodes"))))
+    positions = {(entry['_source_week'], entry['_source_index']) for entry in entries}
+    missing_positions = any(
+        (ref.get('week'), ref.get('entry_index')) not in positions
+        for node in as_object_list(index.get('nodes'))
+        for ref in as_object_list(node.get('source_entry_refs'))
+        if isinstance(ref.get('week'), str) and isinstance(ref.get('entry_index'), int)
+    )
+    return bool(expected - present) or missing_positions or (isinstance(count, int) and count > len(entries))
+
+
+def index_is_current(index: dict[str, Any], entries: list[dict[str, Any]], artifacts: list[dict[str, Any]]) -> bool:
     source = index.get("source")
     if not isinstance(source, dict) or source.get("builder_version") != INDEX_BUILDER_VERSION:
         return False
     raw_entry_count = source.get("raw_entry_count")
     if isinstance(raw_entry_count, int) and raw_entry_count != len(entries):
+        return False
+    if source.get("input_fingerprint") != input_fingerprint(entries, artifacts):
         return False
     latest_entry = latest_entry_datetime(entries)
     if latest_entry is None:
@@ -680,6 +722,7 @@ def build_index(vault: Path, slug: str, generated_at: str | None = None) -> dict
     source: dict[str, Any] = {
         "kind": "roadmap",
         "builder_version": INDEX_BUILDER_VERSION,
+        "input_fingerprint": input_fingerprint(entries, artifacts),
         "raw_entry_count": len(entries),
         "raw_glob": str(vault / "raw" / "weeks" / "*" / f"{slug}.json"),
         "raw_paths": raw_paths,
@@ -703,8 +746,16 @@ def build_index(vault: Path, slug: str, generated_at: str | None = None) -> dict
 def write_index(index: dict[str, Any], vault: Path, slug: str, output: Path | None) -> Path:
     slug = validate_project_slug(slug)
     target = output or vault / "raw" / "decisions" / f"{slug}.json"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(index, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if target.exists():
+        try:
+            previous = json.loads(target.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            previous = None
+        if isinstance(previous, dict):
+            entries, paths = load_raw_entries(vault, slug)
+            if missing_raw_sources(previous, entries, paths):
+                raise ValueError("raw sources missing or truncated; existing decision index preserved")
+    write_json_atomic(target, index)
     return target
 
 
@@ -755,8 +806,13 @@ def load_index(vault: Path, slug: str) -> dict[str, Any]:
         except json.JSONDecodeError:
             data = None
         if isinstance(data, dict):
-            entries, _ = load_raw_entries(vault, slug)
-            if index_is_current(data, entries):
+            entries, paths = load_raw_entries(vault, slug)
+            if missing_raw_sources(data, entries, paths):
+                return {**data, "nodes": [], "edges": [], "diagnostics": [
+                    "Raw sources missing or truncated; existing index preserved, claims unavailable."
+                ]}
+            artifacts, _ = load_artifacts(vault, slug)
+            if index_is_current(data, entries, artifacts):
                 return data
             return build_index(vault, slug)
     return build_index(vault, slug)
@@ -782,7 +838,7 @@ def read_or_rebuild_decision_context(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     slug = validate_project_slug(slug)
     path = vault / "raw" / "decisions" / f"{slug}.json"
-    entries, _ = load_raw_entries(vault, slug)
+    entries, paths = load_raw_entries(vault, slug)
     raw_latest = latest_entry_datetime(entries)
     status: dict[str, Any] = {
         "path": str(path),
@@ -813,7 +869,11 @@ def read_or_rebuild_decision_context(
 
     if isinstance(data, dict):
         status["index_generated_at"] = data.get("generated_at")
-        if not index_is_current(data, entries):
+        if missing_raw_sources(data, entries, paths):
+            status["reason"] = "missing_raw_sources"
+            return [], status
+        artifacts, _ = load_artifacts(vault, slug)
+        if not index_is_current(data, entries, artifacts):
             return rebuild("stale_index")
         nodes = data.get("nodes")
         if isinstance(nodes, list):
@@ -925,6 +985,9 @@ def compact_node(node: dict[str, Any], terms: list[str] | None = None, mode: str
         "timestamp": node.get("timestamp"),
         "week": node.get("week"),
         "confidence": node.get("confidence"),
+        "evidence_boundary": node.get("evidence_boundary", "limited"),
+        "impact_boundary": node.get("impact_boundary", "unknown"),
+        "evidence_gap": node.get("evidence_gap"),
         "decision": node.get("decision"),
         "why": node.get("why"),
         "chosen": node.get("chosen"),
@@ -967,8 +1030,11 @@ def supporting_nodes(
 def has_direct_evidence(node: dict[str, Any]) -> bool:
     """Direct evidence is distinct from raw-entry provenance."""
     return bool(
-        as_string_list(node.get("evidence_refs"))
-        or as_object_list(node.get("source_refs"))
+        any(not ref.lower().startswith(("conversation:", "session:", "repository_snapshot:"))
+            for ref in as_string_list(node.get("evidence_refs")))
+        or any(ref.get("type") in {"commit", "doc", "file", "test", "eval", "issue", "pr"}
+               and isinstance(ref.get("ref"), str) and ref["ref"].strip()
+               for ref in as_object_list(node.get("source_refs")))
         or as_string_list(node.get("direct_artifact_refs"))
     )
 
@@ -980,6 +1046,9 @@ def evidence_strength(top: list[dict[str, Any]], terms: list[str], mode: str) ->
     match_count = len(matched_terms(strongest, terms, mode))
     has_provenance = bool(strongest.get("source_entry_refs"))
     direct_evidence = has_direct_evidence(strongest)
+    boundary = strongest.get("evidence_boundary", "limited")
+    if boundary != "verified" or (mode == "impact" and strongest.get("impact_boundary") != "observed"):
+        return "weak"
     strong_match_floor = 1 if len(terms) == 1 else min(len(terms), 3)
     if strongest.get("confidence") == "explicit" and direct_evidence and match_count >= strong_match_floor:
         return "strong"
@@ -997,10 +1066,11 @@ def answerability_reason(top: list[dict[str, Any]], terms: list[str], mode: str,
         return "No decision index nodes matched enough query terms to ground an answer."
     top_node = top[0]
     matched = matched_terms(top_node, terms, mode)
-    basis = "direct evidence" if has_direct_evidence(top_node) else "raw-entry provenance only"
+    basis = "supporting reference" if has_direct_evidence(top_node) else "raw-entry provenance only"
     return (
         f"Top node {top_node.get('id')} matched {len(matched)}/{len(terms)} query terms "
-        f"with {top_node.get('confidence', 'unknown')} confidence, {basis}, and {strength} evidence."
+        f"with {top_node.get('confidence', 'unknown')} confidence, {basis}, "
+        f"{top_node.get('evidence_boundary', 'limited')} boundary, and {strength} evidence."
     )
 
 
@@ -1042,10 +1112,17 @@ def build_query_pack(index: dict[str, Any], query: str, mode: str, limit: int) -
         missing_evidence = ["No decision index nodes matched the query terms."]
     elif not has_direct_evidence(top[0]):
         missing_evidence = [
-            "The top matched decision has raw-entry provenance but lacks direct evidence_refs, source_refs, or source-of-truth artifact evidence."
+            "The top matched decision has raw-entry provenance but lacks independent verification; conversation and repository_snapshot refs alone do not verify effects."
         ]
+    elif top[0].get("evidence_boundary") != "verified":
+        missing_evidence = ["The recorded evidence boundary does not establish independent verification."]
+    elif mode == "impact" and top[0].get("impact_boundary") != "observed":
+        missing_evidence = ["The impact is expected or unknown, not an observed result."]
     else:
         missing_evidence = []
+    missing_evidence.extend(as_string_list(index.get("diagnostics")))
+    if top and top[0].get("evidence_gap"):
+        missing_evidence.append(str(top[0]["evidence_gap"]))
     return {
         "schema_version": QUERY_SCHEMA_VERSION,
         "project_slug": index.get("project_slug"),
@@ -1056,6 +1133,8 @@ def build_query_pack(index: dict[str, Any], query: str, mode: str, limit: int) -
         "terms": terms,
         "matched_terms": top_matched_terms,
         "evidence_strength": strength,
+        "evidence_boundary": top[0].get("evidence_boundary", "limited") if top else "limited",
+        "impact_boundary": top[0].get("impact_boundary", "unknown") if top else "unknown",
         "answerability_reason": answerability_reason(top, terms, mode, strength),
         "top_nodes": [compact_node(node, terms, mode) for node in top],
         "supporting_nodes": [compact_node(node, terms, mode) for node in supporting],
@@ -1208,6 +1287,7 @@ def build_roadmap_pack(index: dict[str, Any], limit_threads: int = 20) -> dict[s
     ]
     return {
         "schema_version": ROADMAP_SCHEMA_VERSION,
+        "diagnostics": as_string_list(index.get("diagnostics")),
         "project_slug": index.get("project_slug"),
         "generated_at": current_timestamp(),
         "source": {

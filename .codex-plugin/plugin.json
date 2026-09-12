@@ -1,6 +1,6 @@
 {
   "name": "tracework",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Turn agent work into evidence-backed progress reports — daily, weekly, and monthly, with local decision replay when work is questioned later.",
   "author": {
     "name": "Kennywu",
@@ -34,10 +34,10 @@
     "logo": "./assets/logo.png",
     "brandColor": "#B87508",
     "defaultPrompt": [
-      "Use Tracework to write this week's work-scoped weekly brief with /tracework:weekly work.",
-      "Use Tracework to write today's work-scoped daily report with /tracework:daily work.",
+      "Use Tracework to write this week's scoped weekly brief with /tracework:weekly.",
+      "Use Tracework to write today's scoped daily report with /tracework:daily.",
       "Use Tracework to capture this key session with /tracework:capture.",
-      "Use Tracework to create a raw-first monthly review with /tracework:monthly work.",
+      "Use Tracework to create a raw-first monthly review with /tracework:monthly.",
       "Use Tracework to recover today's scoped session evidence with /tracework:capture day."
     ],
     "screenshots": [

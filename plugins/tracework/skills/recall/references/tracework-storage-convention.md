@@ -140,12 +140,12 @@ The file shape is:
   "generated_at": "2026-05-17T08:00:00+08:00",
   "source": {
     "kind": "roadmap",
-    "builder_version": 2,
+    "builder_version": 3,
     "raw_entry_count": 12
   },
   "nodes": [
     {
-      "id": "my-project:2026-W20:001",
+      "id": "raw:my-project:2026-W20:0",
       "timestamp": "2026-05-17T08:00:00+08:00",
       "week": "2026-W20",
       "confidence": "explicit",
@@ -154,7 +154,8 @@ The file shape is:
           "week": "2026-W20",
           "path": "/path/to/vault/raw/weeks/2026-W20/my-project.json",
           "timestamp": "2026-05-17T08:00:00+08:00",
-          "entry_index": 0
+          "entry_index": 0,
+          "entry_id": "raw:my-project:2026-W20:0"
         }
       ],
       "summary": "Chose a derived decision replay index before adding autonomous capture",
@@ -192,8 +193,8 @@ The file shape is:
   ],
   "edges": [
     {
-      "from": "my-project:2026-W20:001",
-      "to": "my-project:2026-W20:002",
+      "from": "raw:my-project:2026-W20:0",
+      "to": "raw:my-project:2026-W20:1",
       "type": "same_thread",
       "confidence": "heuristic",
       "reason": "Both nodes share thread:decision-replay"
@@ -205,7 +206,17 @@ The file shape is:
 `raw/decisions/` is derived and rebuildable. `source.builder_version`
 identifies the deterministic builder semantics; consumers rebuild an older
 derived index when this version changes without migrating or rewriting weekly
-raw entries.
+raw entries. Builder 3 uses `raw:{slug}:{week}:{entry_index}` (original zero-based
+JSON-array position), never the sorted node ordinal. Raw arrays are append-only:
+do not insert, reorder, or delete existing elements. Backfilling another week or
+appending a same-week entry leaves existing ids unchanged. Old reports retain
+`source_entry_refs`; no ambiguous mapping from old ordinal ids is fabricated.
+
+`source.input_fingerprint` is SHA-256 over canonical JSON of loaded raw and
+artifact inputs. Content edits and artifact changes invalidate the index even
+when entry count and timestamps are unchanged. Rebuilds use atomic replacement.
+Missing or truncated raw sources preserve the saved index and return unavailable
+claims with a diagnostic; they must not overwrite history with an empty index.
 
 ### Decision Node Fields
 
@@ -229,7 +240,10 @@ raw entries.
 | `artifact_refs` | string[] | No | Artifact paths or ids touched by the decision |
 | `direct_artifact_refs` | string[] | No | Artifact references explicitly recorded under `artifact_context.source_of_truth`; unlike general `artifact_refs`, these can support verification |
 | `evidence_refs` | string[] | No | Direct commit, eval, issue, document, or source references supporting the claim |
-| `source_refs` | object[] | No | Typed direct evidence references copied from the raw entry |
+| `source_refs` | object[] | No | Typed references; conversation and repository_snapshot are provenance, not outcome verification |
+| `evidence_boundary` | enum | Yes | `verified`, `recorded`, or `limited`; copied and constrained from raw reporting |
+| `impact_boundary` | enum | Yes | `observed`, `expected`, or `unknown`; copied from raw reporting |
+| `evidence_gap` | string | No | Remaining verification gap from raw reporting |
 | `thread_id` | string | No | Decision thread grouping key |
 | `inference_notes` | string[] | No | Notes explaining any inferred decision content |
 
@@ -237,8 +251,11 @@ raw entries.
 records. They establish provenance, not independent verification. Consumers may
 summarize the decision node, but they must not present derived content as
 stronger than the node's `confidence`, `inference_notes`, and direct evidence
-allow. `evidence_refs`, typed `source_refs`, and `direct_artifact_refs` are the
-direct evidence surfaces for drilling below the raw claim. General
+allow. Explicit legacy entries default to `recorded`; inferred entries to
+`limited`. `strong` additionally requires a valid `verified` boundary and
+supporting references; impact queries require `observed`. Conversation refs and
+repository snapshots alone cannot establish verification. Other references are
+support to inspect, not proof that the reader reran validation. General
 `artifact_refs` remain navigation hints unless explicitly marked source-of-truth.
 
 ### Decision Edges

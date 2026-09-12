@@ -92,8 +92,9 @@ const decisionReplayCopies = [
 ];
 
 const rawHelperCopies = [
-  path.join(sourceSkillsDir, 'capture', 'scripts', 'tracework_raw.py'),
-  path.join(sourceSkillsDir, 'cold-start-interview', 'scripts', 'tracework_raw.py'),
+  path.join(repoRoot, 'references', 'tracework_raw.py'),
+  ...['capture', 'cold-start-interview', 'daily', 'weekly', 'monthly', 'query', 'recall', 'roadmap']
+    .map(skill => path.join(sourceSkillsDir, skill, 'scripts', 'tracework_raw.py')),
 ];
 
 const errors = [];

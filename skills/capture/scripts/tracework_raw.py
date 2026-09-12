@@ -268,9 +268,10 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
 
 def find_project_config(cwd: Path) -> Path | None:
     current = cwd.resolve()
+    global_path = Path.home().resolve() / ".tracework" / "config.yaml"
     for directory in (current, *current.parents):
         candidate = directory / ".tracework" / "config.yaml"
-        if candidate.exists():
+        if candidate != global_path and candidate.exists():
             return candidate
     return None
 
@@ -315,6 +316,59 @@ def iso_week(value: str | None = None) -> str:
         date_value = dt.date.today()
     year, week, _ = date_value.isocalendar()
     return f"{year}-W{week:02d}"
+
+
+def resolve_scope(cwd: Path, requested: str | None, purpose: str) -> dict[str, Any]:
+    """Resolve a reporting lane without reading work records or transcripts."""
+    if purpose not in {"report", "session"}:
+        raise ValueError("purpose must be report or session")
+    if requested is not None:
+        validate_non_empty_string("scope", requested)
+        return {"scope": requested.strip(), "scope_source": "explicit", "reason": "user_requested"}
+
+    cfg, _ = resolve_config(cwd)
+    profile = cfg.get("profile", {})
+    if not isinstance(profile, dict):
+        raise ValueError("profile must be a mapping")
+    default = profile.get("default_reporting_group")
+    if default is not None:
+        validate_non_empty_string("profile.default_reporting_group", default)
+        return {"scope": default.strip(), "scope_source": "configured", "reason": "default_reporting_group"}
+
+    project_config = find_project_config(cwd)
+    root = project_config.parent.parent if project_config else next(
+        (path for path in (cwd.resolve(), *cwd.resolve().parents) if (path / ".git").exists()),
+        cwd.resolve(),
+    )
+    project_profile = load_yaml_config(project_config).get("profile", {}) if project_config else {}
+    if not isinstance(project_profile, dict):
+        raise ValueError("project profile must be a mapping")
+    group = project_profile.get("reporting_group")
+    reason = "project_config"
+    if group is None and cfg.get("knowledge_vault"):
+        registry = Path(cfg["knowledge_vault"]) / "raw" / "projects.json"
+        if registry.exists():
+            projects = json.loads(registry.read_text(encoding="utf-8"))
+            if not isinstance(projects, list):
+                raise ValueError("project registry must be an array")
+            groups = {
+                row.get("reporting_group") for row in projects
+                if isinstance(row, dict) and isinstance(row.get("path"), str)
+                and same_path(row["path"], root) and isinstance(row.get("reporting_group"), str)
+            }
+            if len(groups) > 1:
+                raise ValueError("conflicting reporting groups for current project")
+            group = next(iter(groups), None)
+            reason = "project_registry"
+    if group is not None:
+        validate_non_empty_string("profile.reporting_group", group)
+        if group.strip() != "unassigned":
+            return {"scope": group.strip(), "scope_source": "project", "reason": reason}
+    return {
+        "scope": "local" if purpose == "report" else None,
+        "scope_source": "implicit-local" if purpose == "report" else "unresolved",
+        "reason": "current_project_unassigned",
+    }
 
 
 def slugify(name: str) -> str:
@@ -931,6 +985,11 @@ def command_project_slug(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_resolve_scope(args: argparse.Namespace) -> int:
+    print_json(resolve_scope(Path(args.cwd).expanduser().resolve(), args.scope, args.purpose))
+    return 0
+
+
 def command_append_entry(args: argparse.Namespace) -> int:
     vault = Path(args.vault).expanduser().resolve() if args.vault else None
     result = append_entries(
@@ -981,6 +1040,12 @@ def build_parser() -> argparse.ArgumentParser:
     config_parser = subparsers.add_parser("resolve-config", help="Resolve Tracework config")
     config_parser.add_argument("--cwd", default=os.getcwd(), help="Project working directory")
     config_parser.set_defaults(func=command_resolve_config)
+
+    scope_parser = subparsers.add_parser("resolve-scope", help="Resolve report or session scope without reading evidence")
+    scope_parser.add_argument("--cwd", default=os.getcwd(), help="Project working directory")
+    scope_parser.add_argument("--scope", help="Explicit user-requested group or all")
+    scope_parser.add_argument("--purpose", choices=["report", "session"], required=True)
+    scope_parser.set_defaults(func=command_resolve_scope)
 
     slug_parser = subparsers.add_parser("project-slug", help="Resolve project slug")
     slug_parser.add_argument("--cwd", default=os.getcwd(), help="Project working directory")

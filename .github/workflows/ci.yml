@@ -22,10 +22,8 @@ jobs:
         run: npm --prefix cli run copy-skills
       - name: Check skills
         run: npm --prefix cli run check-skills
-      - name: Test doctor command
-        run: npm --prefix cli run test:doctor
-      - name: Run regression suite
-        run: npm --prefix cli run test:regression
+      - name: Run complete test suite
+        run: npm --prefix cli test
       - name: Run doctor smoke test
         run: |
           mkdir -p "$RUNNER_TEMP/tracework-vault"

@@ -10,10 +10,11 @@ if [ ! -f "$CANONICAL" ]; then
 fi
 
 TARGETS=(
-  "$REPO_ROOT/skills/capture/scripts/"
-  "$REPO_ROOT/skills/cold-start-interview/scripts/"
-  "$REPO_ROOT/cli/skills/capture/scripts/"
+  "$REPO_ROOT/references/"
 )
+for skill in capture cold-start-interview daily weekly monthly query recall roadmap; do
+  TARGETS+=("$REPO_ROOT/skills/$skill/scripts/")
+done
 
 for target in "${TARGETS[@]}"; do
   mkdir -p "$target"

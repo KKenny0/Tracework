@@ -1,4 +1,4 @@
 interface:
   display_name: "Tracework Daily"
   short_description: "Close the day with a scoped management narrative"
-  default_prompt: "Use $daily to write today's work-scoped management report from Tracework raw entries, using git only for limited uncovered activity."
+  default_prompt: "Use $daily to write today's scoped management report from Tracework raw entries, using git only for limited uncovered activity."
