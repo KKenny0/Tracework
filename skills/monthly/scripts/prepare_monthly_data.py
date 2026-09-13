@@ -30,6 +30,8 @@ prepare_monthly_data.py - 从月度归档中提取信号并构建总结骨架（
 """
 
 import argparse
+import calendar
+from tracework_state import read_view
 import json
 import os
 import re
@@ -216,7 +218,25 @@ def parse_monthly_file(filepath, month_key=None):
     返回：
         dict: 月度信号数据
     """
-    lines = Path(filepath).read_text(encoding='utf-8').splitlines(keepends=True) if filepath else []
+    text = Path(filepath).read_text(encoding='utf-8') if filepath else ''
+    editorial_context = []
+
+    def keep_editorial(match):
+        day, group_hex, body = match.groups()
+        try:
+            group = bytes.fromhex(group_hex).decode('utf-8')
+        except (ValueError, UnicodeError):
+            group = 'unassigned'
+        if not month_key or day.startswith(month_key):
+            editorial_context.append({'date': day, 'reporting_group': group,
+                                      'text': body, 'source': 'daily_prose',
+                                      'evidence_boundary': 'editorial_only'})
+        return ''
+
+    text = re.sub(
+        r'<!-- tracework:daily date=(\d{4}-\d{2}-\d{2}) group=([0-9a-f]+) sha256=[0-9a-f]{64} -->\r?\n(.*?)<!-- /tracework:daily -->',
+        keep_editorial, text, flags=re.S)
+    lines = text.splitlines(keepends=True)
     month_key = month_key or (Path(filepath).stem if filepath else 'unknown')
 
     entries = []
@@ -415,10 +435,11 @@ def parse_monthly_file(filepath, month_key=None):
         'categories_detected': all_categories,
         'high_frequency_topics': global_keywords,
         'entries': entries,
+        'editorial_context': editorial_context,
     }
 
 
-def load_monthly_raw_entries(vault_path, month_key):
+def load_monthly_raw_entries(vault_path, month_key, project_slugs=None, as_of=None, views=None):
     """Load raw entries for the month without rewriting or interpreting them."""
     vault = Path(vault_path).expanduser().resolve()
     weeks_dir = vault / 'raw' / 'weeks'
@@ -440,28 +461,22 @@ def load_monthly_raw_entries(vault_path, month_key):
     if not weeks_dir.is_dir():
         return collected
 
-    for raw_file in sorted(weeks_dir.glob('*/*.json')):
-        slug = raw_file.stem
-        try:
-            entries = json.loads(raw_file.read_text(encoding='utf-8'))
-        except (json.JSONDecodeError, OSError):
-            continue
-        if not isinstance(entries, list):
-            continue
+    slugs = project_slugs if project_slugs is not None else sorted({p.stem for p in weeks_dir.glob('*/*.json')})
+    year, month = map(int, month_key.split('-'))
+    end = f'{month_key}-{calendar.monthrange(year, month)[1]:02d}'
+    for slug in slugs:
+        view = read_view(vault, slug, month_key + '-01', end, as_of)
+        if views is not None:
+            views.append(view)
         project = registry.get(slug, {})
-        for index, entry in enumerate(entries):
-            if not isinstance(entry, dict):
-                continue
-            timestamp = entry.get('timestamp')
-            if not isinstance(timestamp, str) or not timestamp.startswith(month_key):
-                continue
+        for entry in view['entries']:
             collected.append({
                 'project_slug': slug,
                 'project_name': project.get('name') or slug,
                 'reporting_group': project.get('reporting_group') or 'unassigned',
-                'source_path': str(raw_file),
-                'entry_index': index,
-                'entry': entry,
+                'source_path': entry['_source_path'],
+                'entry_index': entry['_source_index'],
+                'entry': {k: v for k, v in entry.items() if not k.startswith('_')},
             })
     return collected
 
@@ -832,10 +847,19 @@ def build_review_skeleton(signals, summary_mode='project_focused', evidence_mode
         'unassigned_entries_count': len(unassigned),
         'warnings': [],
         'raw_entries': signals.get('raw_entries', []),
+        'effective_views': signals.get('effective_views', []),
+        'editorial_context': signals.get('editorial_context', []),
         'raw_entries_by_project': {},
         'reporting_groups': {},
         'raw_work_streams': build_raw_work_streams(signals.get('raw_entries', [])),
     }
+
+    skeleton['current_risks'] = [dict(state, project_slug=view['project_slug'])
+        for view in signals.get('effective_views', []) for state in view['states']
+        if state['subject'].startswith('risk:') and state['state'] not in ('mitigated', 'resolved', 'closed', 'accepted')]
+    skeleton['accepted_risks'] = [dict(state, project_slug=view['project_slug'])
+        for view in signals.get('effective_views', []) for state in view['states']
+        if state['subject'].startswith('risk:') and state['state'] == 'accepted']
 
     for raw_item in signals.get('raw_entries', []):
         project_name = raw_item.get('project_name') or raw_item.get('project_slug') or 'unassigned'
@@ -905,6 +929,8 @@ def main():
                         default=DEFAULT_REAL_PROJECT_MIN_DAYS,
                         help=f'自动检测真实项目的最少出现天数阈值 (默认: {DEFAULT_REAL_PROJECT_MIN_DAYS})')
 
+    parser.add_argument('--project-slug', action='append', help='Authorized project; repeat for scoped multi-project review')
+    parser.add_argument('--as-of', help='Knowledge cutoff ISO timestamp')
     args = parser.parse_args()
 
     if args.input and not os.path.isfile(args.input):
@@ -918,8 +944,9 @@ def main():
         parser.error("提供 --month YYYY-MM，或使用 YYYY-MM.md 归档")
 
     signals = parse_monthly_file(args.input, target_month)
+    signals['effective_views'] = []
     signals['raw_entries'] = (
-        load_monthly_raw_entries(args.vault, target_month) if args.vault else []
+        load_monthly_raw_entries(args.vault, target_month, args.project_slug, args.as_of, signals['effective_views']) if args.vault else []
     )
 
     # light 模式：精简 signals 中的 entries

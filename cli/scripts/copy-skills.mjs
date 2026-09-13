@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import { skillCopies } from './skill-copies.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -64,6 +65,10 @@ function copyDir(src, dest) {
 function copyFile(src, dest) {
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.copyFileSync(src, dest);
+}
+
+for (const [source, target] of skillCopies) {
+  copyFile(path.join(repoRoot, source), path.join(repoRoot, target));
 }
 
 fs.rmSync(bundledSkillsDir, { recursive: true, force: true });

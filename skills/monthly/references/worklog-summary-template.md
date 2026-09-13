@@ -24,7 +24,7 @@ gate.}
 - **剩余门槛：** {what remains open}
 - **证据边界：** {verified | recorded | limited}
 
-{Repeat for normally three and no more than four arcs.}
+{Repeat only for supported arcs; one is enough for sparse input.}
 
 ## 工作组合状态
 

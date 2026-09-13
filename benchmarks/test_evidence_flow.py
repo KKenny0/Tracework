@@ -245,7 +245,7 @@ class ScopeAndReplayTests(unittest.TestCase):
         target = replay.write_index(index, self.root, 'probe', None)
         nodes, status = replay.read_or_rebuild_decision_context(self.root, 'probe', 10)
         self.assertTrue(status['rebuilt'])
-        self.assertEqual(json.loads(target.read_text())['source']['builder_version'], 3)
+        self.assertEqual(json.loads(target.read_text())['source']['builder_version'], 4)
         self.write('raw/weeks/2026-W37/probe.json', [{**self.entry, 'summary': 'Changed in place'}])
         self.assertEqual(replay.load_index(self.root, 'probe')['nodes'][0]['summary'], 'Changed in place')
         fresh = replay.build_index(self.root, 'probe')

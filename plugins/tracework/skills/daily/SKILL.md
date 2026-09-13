@@ -90,8 +90,8 @@ An assigned current-project group is a normal exact-group scope;
 
 ### Empty signal
 
-If local first-run has no raw entries and no meaningful git activity, return a
-short empty-state: what was checked, that nothing reportable was found, and
+If local first-run has no raw entries, admitted conversation facts, or
+meaningful git activity, return a short empty-state: what was checked, that nothing reportable was found, and
 that capture or more work signal will improve the next run. Do not error.
 
 ## Workflow
@@ -114,15 +114,17 @@ that capture or more work signal will improve the next run. Do not error.
      missing classification. Show unassigned separately only in `all`.
    - For local first-run, keep a single `local` lane for the current repo.
 
-3. **Collect raw entries.**
-   - Calculate the ISO week and read
-     `{vault}/raw/weeks/{week}/{slug}.json` for the target date when a vault
-     exists.
+3. **Collect effective raw entries.**
+   - Use the shared contract's `tracework_state.py` invocation per authorized
+     project and target date. Preserve correction history, period-end states and
+     diagnostics; do not directly rank historical/retracted records.
    - Prefer factual top-level fields and optional `reporting` boundaries.
    - Artifact dossiers are optional navigation. Do not copy full artifacts.
    - Without a vault, skip raw collection and continue with git coverage.
 
-4. **Check git coverage.**
+4. **Admit current conversation evidence, then check git coverage.**
+   - Apply Current Conversation Evidence in the shared contract; scope, date,
+     deduplication, and conflict rules apply before synthesis. No capture side effects.
    - Use lightweight commit subject/stat inspection only for work not already
      covered by raw entries.
    - Git-only material is `limited`; do not infer motivation, decisions,
@@ -134,17 +136,16 @@ that capture or more work signal will improve the next run. Do not error.
    - Group entries and fallback commits by coherent work stream.
    - Merge feature/fix/refactor entries that describe one state transition.
    - For each reporting group or the single local lane, write one daily
-     judgment and normally three headline advances. Two to four is acceptable
-     when the evidence warrants it. Put remaining meaningful work under Other
-     activity. Thin first-run reports may use fewer headlines.
+     judgment and only supported advances; one is enough for sparse evidence.
+     Put remaining meaningful work under Other activity. Thin first-run reports may use fewer headlines.
    - Preserve explicit risk, conflict, open question, rejected path, and
      evidence gaps.
 
 6. **Write incrementally or in conversation.**
-   - Vault mode: match existing `### YYYY.MM.DD` or `### YYYY-MM-DD` headings;
-     merge into an existing date section; never duplicate the date; preserve
-     the exact project label `- [Project Name]` and stable field labels
-     required by Monthly; do not write an empty date section.
+   - Vault mode: use only `<this-skill>/scripts/update_daily_note.py` with the
+     previously read whole-file hash and per-group bodies, as described in
+     `daily-note-writing.md`. A conflict returns a conversation draft, never a
+     manual overwrite. Do not write an empty date section.
    - No-vault or local first-run conversation mode: use the conversation shape
      in `daily-note-writing.md`. Do not invent a Daily Note path.
 

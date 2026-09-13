@@ -20,10 +20,10 @@ coverage, not stronger evidence.
 Read:
 
 - `references/reporting-narrative-contract.md`
-- `references/daily-note-format.md`
+- `references/daily-note-format.md` only when Daily input exists or archiving is requested
 - `references/worklog-summary-template.md`
 - `references/project-tagging-guide.md` when Daily project labels are ambiguous
-- `references/tracework-storage-convention.md` for storage details
+- `references/tracework-storage-convention.md` only when resolving storage/schema details
 
 ## Inputs and Outputs
 
@@ -63,19 +63,24 @@ Outputs:
 
 ### 2. Build Raw-First Context
 
+Admit scoped current conversation facts using the shared contract, including
+deduplication and conflict boundaries. Keep them temporary alongside helper
+output; do not capture or modify raw to make them reportable.
+
 With a vault, collect matching raw entries whether or not Daily/Weekly exist:
 
 ```bash
 python <this-skill>/scripts/prepare_monthly_data.py \
   --vault {vault} \
-  --month {YYYY-MM} \
+  --month {YYYY-MM} --project-slug <authorized-slug> \
   --signals-output {temporary-directory}/signals.json \
   --skeleton-output {temporary-directory}/skeleton.json
 ```
 
 The helper performs deterministic extraction, not selection or prose writing.
-Its context may contain multiple groups; treat it as private analysis and apply
-resolved scope before synthesis. It does not grant permission to publish the
+Repeat `--project-slug` for each authorized in-scope project; pass `--as-of`
+only for an explicit knowledge cutoff. Its effective_views carry period-end
+states, correction history and diagnostics. Partition editorial context too. It does not grant permission to publish the
 unfiltered context. Raw-only input is sufficient. Missing derived indexes and
 Daily/Weekly files do not block the review.
 
@@ -98,19 +103,20 @@ Do not manufacture a blank archive to satisfy the context helper.
 
 ### 4. Write the Review
 
-Use raw entries for status, impact, decisions, risks, evidence, and end-state
-claims. Use Daily judgments and matching Weekly reports to understand what was
+Use effective raw entries for claims and effective_views.states for current
+risks/questions. Separate accepted risks, retain conflicts and unassociated
+questions, and preserve correction history and diagnostics. Use Daily judgments and matching Weekly reports to understand what was
 previously emphasized, but never let a repeated Daily phrase override a later
 raw status.
 
 For each reporting group:
 
 - Write one monthly judgment.
-- Select normally three phase-result arcs; two to four is acceptable.
+- Select supported phase-result arcs; one is enough for sparse evidence.
 - Keep all remaining meaningful projects in the portfolio.
 - Surface only recurring risks supported by repeated timestamps, explicit
   recurrence metadata, or an unresolved risk carried across periods.
-- Write two to four next-month closure targets, normally three.
+- Write only supported next-month closure targets; do not pad.
 - Put evidence and activity metadata in appendices.
 
 `all` is a private combined review with separate complete sections per group.
@@ -138,7 +144,7 @@ warnings, and whether existing files were overwritten.
 - No-vault/local runs write nothing; empty evidence produces a short empty state.
 - Work output contains no personal or unassigned material, including appendices.
 - Raw entries are the semantic source whenever available.
-- Every group has one monthly judgment and normally three phase arcs.
+- Every group has one monthly judgment and only supported phase arcs.
 - Portfolio coverage preserves meaningful non-headline work.
 - Recurring risks have actual repeated or carried evidence.
 - Next-month targets name closure gates, not every task.

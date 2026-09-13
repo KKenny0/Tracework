@@ -733,6 +733,9 @@ def validate_entry(entry: Any) -> dict[str, Any]:
             "entry capture_depth must be one of: "
             + ", ".join(sorted(VALID_CAPTURE_DEPTHS))
         )
+    if 'correction' in entry:
+        from tracework_state import validate_correction
+        validate_correction(entry['correction'])
     validate_source_refs(entry)
     validate_lifecycle_transition(entry)
     validate_reporting(entry)
@@ -769,15 +772,25 @@ def append_entries(
     slug_override: str | None,
 ) -> dict[str, Any]:
     cfg, _ = resolve_config(cwd)
-    vault = vault_override or Path(str(cfg["knowledge_vault"]))
-    slug = slug_override or project_slug(cwd, vault)
+    vault = (vault_override or Path(str(cfg["knowledge_vault"]))).resolve()
+    from tracework_state import validate_slug, validate_correction, effective_records, entry_hash, entry_id
+    slug = validate_slug(slug_override or project_slug(cwd, vault))
     week = iso_week(date_value)
     entries = load_entries(entry_path)
+    corrections = [entry for entry in entries if 'correction' in entry]
+    if corrections:
+        if len(entries) != 1:
+            raise ValueError('append one correction at a time')
+        ref = validate_correction(corrections[0]['correction'])
+        week = ref['week']
 
     # timestamp is work time; captured_at is ingestion time. Historical recovery
     # must provide a timezone-aware source timestamp matching the explicit date.
     now_iso = dt.datetime.now().astimezone().isoformat()
     for entry in entries:
+        if corrections:
+            entry["captured_at"] = now_iso
+            continue
         if date_value:
             occurred = dt.datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
             if occurred.tzinfo is None or occurred.date() != dt.date.fromisoformat(date_value):
@@ -787,8 +800,10 @@ def append_entries(
         entry["captured_at"] = now_iso
 
     target_dir = vault / "raw" / "weeks" / week
-    target_dir.mkdir(parents=True, exist_ok=True)
     target_file = target_dir / f"{slug}.json"
+    if target_file.resolve() != target_file:
+        raise ValueError("raw storage symlinks cannot establish project ownership")
+    target_dir.mkdir(parents=True, exist_ok=True)
 
     with json_lock(target_file):
         existing: list[Any] = []
@@ -798,6 +813,23 @@ def append_entries(
                 raise ValueError(f"target file is not a JSON array: {target_file}")
             existing = existing_data
 
+        if corrections:
+            correction = entries[0]['correction']
+            ref = correction['target_ref']
+            if ref['entry_index'] >= len(existing):
+                raise ValueError('correction target missing')
+            target = existing[ref['entry_index']]
+            if not isinstance(target, dict) or target.get('timestamp') != ref['timestamp'] or entry_hash(target) != correction['target_hash']:
+                raise ValueError('correction target timestamp/hash changed')
+            if date_value and target['timestamp'][:10] != date_value:
+                raise ValueError('correction --date must retain target work date')
+            records = [dict(e, _source_week=week, _source_index=i, _source_path=str(target_file))
+                       for i, e in enumerate(existing) if isinstance(e, dict)]
+            effective, _, diagnostics = effective_records(records, slug)
+            key = f"raw:{slug}:{week}:{ref['entry_index']}"
+            if diagnostics or key not in {entry_id(e, slug) for e in effective}:
+                raise ValueError('correction target is not an unambiguous effective chain tail')
+            entries[0]['timestamp'] = target['timestamp']
         existing.extend(entries)
         write_json_atomic(target_file, existing)
     return {

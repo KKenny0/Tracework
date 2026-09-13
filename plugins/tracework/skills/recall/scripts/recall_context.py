@@ -15,7 +15,10 @@ try:
 except Exception:  # pragma: no cover
     yaml = None
 
+from tracework_state import read_view
 from decision_replay import (
+    load_index,
+    recent_decision_nodes,
     read_or_rebuild_decision_context,
     validate_project_slug,
 )
@@ -153,21 +156,7 @@ def signal_score(entry: dict[str, Any]) -> int:
 
 
 def read_entries(vault: Path, slug: str) -> list[dict[str, Any]]:
-    entries: list[dict[str, Any]] = []
-    weeks_dir = vault / "raw" / "weeks"
-    if not weeks_dir.exists():
-        return entries
-    for week_dir in sorted(weeks_dir.iterdir()):
-        if not week_dir.is_dir():
-            continue
-        path = week_dir / f"{slug}.json"
-        for index, entry in enumerate(read_json_array(path)):
-            item = dict(entry)
-            item["_source_path"] = str(path)
-            item["_source_week"] = week_dir.name
-            item["_source_index"] = index
-            entries.append(item)
-    return sorted(entries, key=parse_timestamp, reverse=True)
+    return list(reversed(read_view(vault, slug)['entries']))
 
 
 def public_entry(entry: dict[str, Any]) -> dict[str, Any]:
@@ -284,7 +273,7 @@ def add_decision_context(
     return context
 
 
-def build_context(cwd: Path, vault_override: str | None, slug_override: str | None, limit: int) -> dict[str, Any]:
+def build_context(cwd: Path, vault_override: str | None, slug_override: str | None, limit: int, end=None, as_of=None) -> dict[str, Any]:
     vault = resolve_vault(cwd, vault_override)
     slug = project_slug(cwd, vault, slug_override)
     if vault is None or not vault.exists():
@@ -300,7 +289,8 @@ def build_context(cwd: Path, vault_override: str | None, slug_override: str | No
             "missing_sources": [{"type": "vault", "path": str(vault) if vault else ""}],
         }
 
-    entries = read_entries(vault, slug)
+    view = read_view(vault, slug, end=end, as_of=as_of)
+    entries = list(reversed(view['entries']))
     ranked = sorted(entries, key=lambda entry: (signal_score(entry), parse_timestamp(entry)), reverse=True)
     recent_entries = [public_entry(entry) for entry in ranked[:limit]]
     artifacts, missing_artifacts = read_artifacts(vault, slug)
@@ -315,6 +305,19 @@ def build_context(cwd: Path, vault_override: str | None, slug_override: str | No
         "intent_artifact_flags": extract_intent_artifact_flags(entries, limit),
         "missing_sources": missing_artifacts,
     }
+    context['states'] = view['states']
+    context['correction_history'] = view['correction_history']
+    context['diagnostics'] = view['diagnostics']
+    context['open_questions'] = [dict(state, value=state['text']) for state in view['states']
+        if state['subject'].startswith('open_question:') and state['state'] not in ('resolved', 'closed')][:limit]
+    context['risks'] = [dict(state, summary=state['text']) for state in view['states']
+        if state['subject'].startswith('risk:') and state['state'] not in ('mitigated', 'resolved', 'closed', 'accepted')][:limit]
+    context['accepted_risks'] = [state for state in view['states'] if state['subject'].startswith('risk:') and state['state'] == 'accepted']
+    if end or as_of:
+        index = load_index(vault, slug, end=end, as_of=as_of)
+        context['decision_context'] = recent_decision_nodes(index, limit)
+        context['decision_context_source'] = {'reason': 'scoped_ephemeral', 'diagnostics': index.get('diagnostics', [])}
+        return context
     return add_decision_context(context, vault, slug, limit)
 
 
@@ -324,6 +327,8 @@ def main() -> int:
     parser.add_argument("--vault", help="Knowledge vault override")
     parser.add_argument("--slug", help="Project slug override")
     parser.add_argument("--limit", type=int, default=12, help="Maximum entries per section")
+    parser.add_argument('--end')
+    parser.add_argument('--as-of')
     args = parser.parse_args()
 
     context = build_context(
@@ -331,6 +336,7 @@ def main() -> int:
         vault_override=args.vault,
         slug_override=args.slug,
         limit=max(args.limit, 1),
+        end=args.end, as_of=args.as_of,
     )
     print(json.dumps(context, ensure_ascii=False, indent=2))
     return 0

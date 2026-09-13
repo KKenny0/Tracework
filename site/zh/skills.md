@@ -6,14 +6,15 @@
 
 ### Daily
 
-`/tracework:daily [work|personal|all]` 为每个 reporting group 生成一个今日判断、通常
-三条状态变化主线、完整组合覆盖和下一道门。
+`/tracework:daily [work|personal|all]` 为每个 reporting group 生成今日判断、必要进展和
+下一道门的短正文。一条有依据的变化也足够。更新按日期、分组保护用户手改；出现
+冲突时保留原文，返回草稿。
 
 ### Weekly
 
 三档：
 
-- **quick**：`这周做了啥` / `周报简版` — 对话内 5–7 条 + 结转，不写文件。
+- **quick**：`这周做了啥` / `周报简版` — 对话内 1–7 条 + 结转，不写文件。
 - **brief**（默认）：`/tracework:weekly` / `写周报` — management brief。
 - **slides**：明确 `weekly PPT` / `周报 PPT` 时 — 面向部门内部汇报、以 IC 为讲述者的
   PPT-ready Markdown Deck；只保留必要页面，异常长度触发压缩检查而不是数字上限。
@@ -27,6 +28,13 @@ packet 不公开，PPT 制作者只做视觉转译。
 
 `/tracework:monthly [work|personal|all]` 以 raw entries 为语义真相，Daily/Weekly 只
 作为已有的人类判断，输出阶段弧线、反复风险和下月收口目标。
+
+报告可以直接使用当前对话中已可见、能确定项目、分组和工作日期的事实，与 raw/git
+去重并保留冲突。这不会自动保存长期记忆，也不会扫描其他对话。
+
+可以通过 Capture 更正已经保存的错误事实。六个读取入口会在原工作期间采用更正后
+的事实，明确指定 as-of 时按当时已知材料回放；已接受风险与未解决冲突分别保留。
+已有报告只在请求更新时改写。补证据限定为你选定的项目和日期，临时查看不会落库。
 
 ## 证据基础
 

@@ -797,9 +797,39 @@ these changes:
 tolerate partial objects because older entries and agent-authored fallback
 entries may only know the new state.
 
-Future consumers may derive current state by reading entries in timestamp order.
-Producers must not pretend lifecycle state is fully managed if they only have a
-new raw signal.
+Consumers use `tracework_state.py`: authorized project → knowledge cutoff →
+corrections → lifecycle state through period end → in-period facts plus states.
+Risk subjects are `risk:{raw_id}`; questions are `open_question:{raw_id}:{index}`.
+Legacy free names link only by exact same name; never close a raw question by
+text similarity. Accepted risks remain separate, and conflicting transitions
+stay conflict rather than choosing the optimistic state. Risk subjects retain their logical root through corrections. A question retains
+its subject only when text and index are unchanged; changed/moved questions use
+the replacement raw ID. Old transitions never silently close different questions.
+
+## Optional Factual Correction
+
+A raw entry may carry `correction` with exactly `operation` (replace/retract),
+`target_ref` (week, zero-based entry_index, timestamp), `target_hash` (canonical
+sorted compact UTF-8 JSON SHA-256), and a nonempty `reason`. Target project is
+always the current write project; no cross-project target or filesystem path.
+Replace carries the complete corrected factual record without implicit merges;
+retract withdraws its target and contributes no new outcome. Append one at a
+time through the existing writer. Check existence, timestamp, content hash and
+effective chain tail under the target weekly file lock, then atomically append.
+A concurrent loser keeps its draft and receives a stale-target conflict.
+
+Correction timestamp stays the target work time, and captured_at is actual
+knowledge time. Append to the target historical week. For a wrong work date,
+retract then append an ordinary entry at the correct date. Current-knowledge
+reviews apply corrections to the original period; explicit as-of excludes later
+captures. Missing legacy captured_at means exact historic replay is unavailable.
+Original arrays remain append-only. Source/hash/chain anomalies are diagnostics,
+not permission to repair history silently. Already generated reports are not
+automatically rewritten; a requested refresh uses protected report writes.
+
+Rollback is unrestricted before the first correction. Once corrections exist,
+retain correction-aware readers, stop new corrections if needed, and fix forward.
+Never downgrade to readers that ignore corrections or delete old array elements.
 
 ## Write Behavior
 

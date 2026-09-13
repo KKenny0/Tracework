@@ -380,7 +380,7 @@
           }
         ]
       },
-      "expected_behavior": "Daily output starts with 今日判断, then normally three 关键推进 items and portfolio coverage. Each project preserves 状态、进展、影响、风险/问题、下一步、来源/证据边界. It must not include personal projects or agent-handoff wording.",
+      "expected_behavior": "Daily output uses 今日判断, necessary progress, and the next gate in short prose; one supported change is enough. Claim-level uncertainty stays adjacent and compact provenance goes in the evidence section. Managed updates preserve user edits and other groups. It must not include personal projects or agent-handoff wording.",
       "assertions": [
         {
           "name": "report_led_shape",
@@ -539,7 +539,7 @@
           }
         ]
       },
-      "expected_behavior": "Produce one work-scoped monthly judgment with normally three phase arcs, portfolio coverage, and evidence appendix. Raw state is semantic truth; the stale-doc item remains a risk and the git-only repair remains limited.",
+      "expected_behavior": "Produce one work-scoped monthly judgment with supported phase arcs, portfolio coverage, and evidence appendix; one arc is enough for sparse input. Raw state is semantic truth; the stale-doc item remains a risk and the git-only repair remains limited.",
       "assertions": [
         {
           "name": "raw_first_phase_narrative",

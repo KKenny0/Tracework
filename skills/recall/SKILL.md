@@ -18,6 +18,15 @@ produce their best available output.
 Recall is a durable-memory surface, not a report fallback. Unlike daily or
 weekly reports, it must not use git history to invent missing memory.
 
+## Effective Facts
+
+Use the bundled helper's effective facts, correction_history, states and
+diagnostics. `--as-of` selects an explicit knowledge cutoff; `--end` bounds
+lifecycle state by work date. Query/Roadmap also accept `--start`. Do not restore
+retracted facts or close questions from similar wording. Accepted risks remain
+separate from mitigated risks. Missing captured_at limits exact as-of replay.
+Old reports are not rewritten; refresh a requested report through its writer.
+
 ## Scope
 
 - Intra-project only.

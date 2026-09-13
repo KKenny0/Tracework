@@ -1,171 +1,71 @@
 # Daily Note Writing Rules
 
-Use these rules after reading `reporting-narrative-contract.md`.
+Read the shared reporting narrative contract first. Prefer raw factual fields,
+then admitted current conversation evidence, optional artifact navigation, and
+uncovered git activity. Old reporting/carry_forward metadata is a hint, not
+current truth. Merge one work-stream state change into one account; keep
+independent work and conflicting claims separate.
 
-## Source Priority
+## Short Body
 
-1. Raw entry factual fields: `summary`, `context`, `status`, `impact`,
-   `motivation`, `root_cause`, decisions, risks, and evidence refs.
-2. Optional `reporting` metadata for claim kind and impact/evidence boundary.
-3. Artifact dossiers for concise navigation and recorded scope.
-4. Git subjects and stats for uncovered activity only.
-
-Old rich `reporting` objects remain readable. Treat channel-specific
-`carry_forward` text as a hint, not as current truth; later entries may have
-changed the state.
-
-## Merge and Selection
-
-- Merge entries that describe the same work-stream state transition.
-- Do not split one coherent arc by commit, file, module, or archetype.
-- Keep genuinely independent work separate.
-- Rank headline candidates by end-state significance, intended-reader
-  relevance, evidence strength, and effect on the next decision.
-- Use two to four headline advances per reporting group, normally three.
-- Put meaningful non-headline work under `其他活动`; do not drop it.
-
-Legacy category labels may still be parsed, but new reports do not organize the
-main narrative as 能力升级/问题定位/结构变更. Those labels describe activity
-type, not why the day matters.
-
-## Daily Judgment
-
-Write one or two sentences per reporting group. State:
-
-- the most important end-state change;
-- the main remaining gate or risk;
-- whether any escalation is needed.
-
-Do not list projects in the judgment. Synthesize the day.
-
-## Headline Item
-
-Each project block should make the narrative spine visible through concise
-fields:
-
-- `收口类型`: `delivery`, `decision`, `risk`, or `learning`.
-- `状态`: source coverage plus `done`, `ongoing`, `risk`, or `decision`.
-- `进展`: starting situation, decisive movement, and current state.
-- `影响`: observed, expected, or unknown management meaning.
-- `风险/问题`: unresolved gate, conflict, or `无明确风险记录`.
-- `下一步`: the next acceptance gate, watch item, or escalation.
-- `来源/证据边界`: `verified`, `recorded`, or `limited`, plus concise refs.
-
-The next step is not an agent handoff or a task dump.
-
-## Output Format
-
-### Vault file shape
-
-Single reporting group:
+Use the same short prose in conversation and vault output:
 
 ```markdown
-### YYYY.MM.DD
-
 #### 今日判断
 
-{1-2 sentence management judgment. State raw-backed, mixed, or git-only when material.}
+{Most important state change and remaining gate, in one or two sentences.}
 
-#### 关键推进
+#### 必要进展
 
-- [项目名称]
-  - 工作流：{work_stream}
-  - 收口类型：{delivery | decision | risk | learning}
-  - 状态：{raw-entry-backed | mixed | git-only}；{done | ongoing | risk | decision}
-  - 进展：{starting situation -> decisive movement -> end state}
-  - 影响：{observed | expected | unknown}；{management meaning}
-  - 风险/问题：{remaining gate, conflict, or 无明确风险记录}
-  - 下一步：{next acceptance gate, watch item, or escalation}
-  - 来源/证据边界：{verified | recorded | limited}；{concise refs}
+- **{project}**：{starting situation, decisive movement, current state and meaning;
+  keep expected, unverified, conflict, or limited boundaries beside this claim.}
 
-#### 其他活动
+#### 下一道门
 
-- [项目名称] {bounded coverage statement and evidence boundary}
+{Concrete next acceptance gate, decision, or escalation, only if supported.}
 
-#### 需要关注或决策
+<details>
+<summary>证据</summary>
 
-- {only when an escalation, decision, or cross-team dependency exists}
+- {project / source ref / recorded, verified, or limited; precise check boundary}
+
+</details>
 ```
 
-Omit optional sections when empty.
+One supported change is enough. Omit empty sections. Cover meaningful secondary
+work briefly; do not invent risks or next steps. Git-only claims stay limited.
+A reader should understand the day in about one minute per reporting group.
+No fixed project labels or field list are required for new reports. Monthly
+uses raw first and reads this prose only as prior editorial judgment.
 
-### Conversation / first-run shape
+For local/no-vault output, add `## YYYY.MM.DD · {scope}` and return in the
+conversation. Label implicit local as unassigned, never work. Do not invent a
+file path. An optional one-line cold-start hint may follow. For `all`, keep a
+separate complete body per exact group, including a separate unassigned lane;
+never rank or write a common judgment across groups.
 
-Use this when there is no vault, or when local first-run should stay in the
-conversation instead of writing `Daily Note.md`. Keep it short. Do not invent
-file paths.
+## Protected Vault Update
 
-```markdown
-## YYYY.MM.DD · {work | personal | all | local}
+Only the bundled merger writes Daily Note. It merges text; it does not generate
+claims. Read the target bytes before drafting and obtain their SHA-256 (or
+`missing` if absent). Save the bodies to a temporary UTF-8 JSON object mapping
+exact reporting groups to Markdown. For `all`, include each actual group as a
+key, never an `all` key. In combined output, start each body with a visible
+`#### {group name}` heading. Do not include a date heading inside a body.
 
-**判断：** {1-2 sentences. Note git-only / limited when material.}
-
-### 主线
-1. {starting situation -> movement -> end state; next gate}
-2. ...
-3. ...
-
-### 其他
-- {bounded non-headline coverage, or omit}
-
-### 证据边界
-- raw：{none | summary}
-- git：{none | summary}
-- 总评：{verified | recorded | limited}
-
----
-可选：配置 knowledge vault 后可跨天累计并写入文件。`/tracework:cold-start-interview`
+```bash
+python <this-skill>/scripts/update_daily_note.py \
+  --path <daily-note-path> --date YYYY-MM-DD \
+  --bodies <temporary-bodies.json> --expected-file-hash <sha256-or-missing>
 ```
 
-Rules for conversation / local output:
-
-- Label `local` when the current repo is unassigned under implicit scope. Never
-  call that lane `work`.
-- Prefer one to three mainline items on thin evidence; do not pad to three empty
-  headlines.
-- Keep the upgrade line optional and single. Never block because setup is
-  missing.
-- If explicit `work` excluded an unassigned current repo, say that in the
-  judgment or evidence section and point to cold-start / `reporting_group`.
-
-For `all`, repeat the report body under separate group headings:
-
-```markdown
-### YYYY.MM.DD
-
-#### 公司工作
-
-##### 今日判断
-...
-
-##### 关键推进
-...
-
-#### 个人项目
-
-##### 今日判断
-...
-```
-
-Never create one judgment or headline ranking across groups.
-
-## Compatibility
-
-- Preserve `- [项目名称]` exactly.
-- Preserve `状态：`, `进展：`, `影响：`, `风险/问题：`, `下一步：`, and
-  `来源/证据边界：` so Monthly can parse new reports.
-- Accept historical checkbox/category content without rewriting it.
-- `[x]` and line counts are activity metadata, not result evidence.
-- When updating an old-format date section, append the new report-led block
-  without deleting user-authored history.
-
-## Fallback Boundaries
-
-Git-only output is useful but limited:
-
-- Phrase it as activity or bounded progress.
-- Do not invent a starting constraint, management effect, decision, risk, or
-  evidence grade that the commit does not support.
-- Filter chore-only noise.
-- Suggest targeted capture only for a specific missing decision, risk, or
-  evidence gap worth preserving.
+The merger owns one marked block per date and exact group. It checks the stored
+body hash before replacement, preserves other blocks and outside bytes, checks
+the whole-file snapshot before atomic replacement, and serializes its own
+writers. On conflict (user edits, corrupt/duplicate markers, ambiguous legacy
+date content, or concurrent changes), keep the original file and deliver the
+prepared body as a conversation draft with the reason. Do not bypass protection,
+repair markers, rehash user edits, or retry with a fresh hash to force a write.
+Legacy checkbox and field-format history remains untouched. The optimistic
+whole-file check cannot lock unrelated editors; if the user reports a concurrent
+edit after writing, preserve both versions and resolve explicitly.

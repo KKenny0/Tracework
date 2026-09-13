@@ -121,3 +121,28 @@ Every meaningful stream must appear in the body or this ledger.
 For `all`, write two complete group sections, such as `公司工作` and
 `个人项目`. Each group gets its own body and appendix so work output can be
 extracted without personal references.
+
+## Brief Quality Gate
+
+
+- Every group has exactly one weekly judgment.
+- Every goal states its source, confidence, status, and closure criterion.
+- Inferred or unknown goals never use confirmed-goal language.
+- Every prior commitment is accounted for; proposals remain proposals.
+- Every material change is goal-linked, explicitly unplanned, or in the
+  portfolio.
+- Replanned work preserves the prior direction, evidence trigger, reason, and
+  new direction.
+- Every meaningful remaining stream appears in the portfolio.
+- Every unresolved risk or next commitment has a concrete closure criterion.
+- The body alone reconstructs goal state, actual change, material variance,
+  decision or support, next commitment, and confidence boundary.
+- Every body block survives counterfactual deletion; full prior-item,
+  portfolio, and evidence coverage stays in the appendix.
+- The body contains no tables except each admitted Change Explanation Card's
+  single Before/After comparison; it contains no source paths, commit lists, or
+  evidence index.
+- Appendix ledgers and mappings do not repeat body narrative.
+- Brief mode does not require diagrams, implementation narratives, or charts.
+  It may use one lightweight visual inside an admitted Change Explanation Card;
+  simple results remain text-only.

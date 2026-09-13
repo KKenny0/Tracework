@@ -65,6 +65,51 @@ result as `limited` and avoid inventing motivation, trade-offs, or verified
 impact. Capture improves the evidence boundary; it is not a prerequisite for
 every report.
 
+## Temporary Reporting Evidence and Daily Updates
+
+Daily, Weekly and Monthly admit already-visible conversation facts with known
+project, group and work date. They deduplicate exact entry refs, repository plus
+commit or message refs before state-change merging; conflicts stay visible.
+Reports do not implicitly invoke Capture, write raw, register projects or update
+session scan watermarks. Unsaved conversation facts are not durable memory.
+
+New Daily prose is editorial context for Monthly; legacy field/checkbox formats
+remain readable. `skills/daily/scripts/update_daily_note.py` owns one block per
+date and exact group, with a body SHA-256 in its marker. It accepts a JSON map of
+group bodies and the expected whole-file hash from the draft snapshot. It checks
+user edits and concurrent changes before atomic replacement; other blocks and
+outside text stay byte-for-byte intact. Conflicts preserve the file and return
+the draft. `all` submits separate actual group bodies, never an all block.
+An advisory lock serializes this writer; unrelated editors are covered by the
+optimistic file check, not a universal filesystem lock.
+
+## Corrections and Period-End State
+
+The shared `references/tracework_state.py` reader resolves one authorized project
+at a time. It applies an explicit knowledge cutoff, replacement/withdrawal
+chains, and lifecycle state through the report end before selecting work-period
+facts. Daily, Weekly, Monthly, Recall, Query and Roadmap use the same view.
+
+A correction contains operation, exact target week/index/timestamp, target hash
+and reason. The existing append writer checks the effective tail inside the
+weekly-file lock and atomically appends. Replacement is complete, withdrawal is
+not a new outcome. Work time stays in the original week; captured_at records
+when the correction became known. Explicit as-of excludes later captures;
+legacy missing captured_at limits exact historical replay.
+
+Risk subjects keep their logical raw ID. Question subjects persist only when
+text and index are unchanged; moved/changed questions get new IDs. Legacy free
+names form exact-name chains and never resolve similar raw questions. Accepted
+risks are separate, and conflicting transitions remain unresolved conflicts.
+Already generated reports stay unchanged until an explicit refresh. After the
+first correction, retain correction-aware readers and fix forward rather than
+downgrading. No history migration or raw-array rewriting is required.
+
+Report-driven evidence recovery uses a selected project/date and checks
+`--project-root` before opening a transcript. A candidate is only a possible
+source. Complete the unscanned increment before durable capture/watermark update;
+temporary inspection changes neither raw nor watermarks.
+
 ## Raw Entries
 
 Raw entries should preserve report-worthy signals:

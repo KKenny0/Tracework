@@ -31,8 +31,9 @@ Daily Note 使用三级标题组织内容：
 
 ## 内容结构
 
-每个日期下默认使用 report-led 日报结构。它面向职场汇报，同时保留
-monthly 解析所需的项目标签、状态和证据边界：
+新日报使用短正文与每日期、每分组的 Tracework 管理块。正文仅作历史判断，
+不要求项目标签或固定字段；raw 仍是语义来源。不要将管理块中的助手陈述当成
+独立验证。以下为兼容读取的历史 report-led 格式：
 
 ```markdown
 ### 2026.03.02
@@ -84,7 +85,7 @@ Tracework 报告模型从字段堆叠进入按受众分区的管理收口，Mont
 
 一天内可以有多个项目。
 
-新格式也必须保留 `- [项目名]`，这是 monthly project grouping 的稳定
+历史字段格式保留 `- [项目名]`，这是 monthly project grouping 的稳定
 入口。不要把项目名只写在标题或自然语言里。
 
 ### 模块标签格式
@@ -128,7 +129,7 @@ Tracework 报告模型从字段堆叠进入按受众分区的管理收口，Mont
 
 ### Report field 格式
 
-新格式使用以下字段，每个字段都是普通 Markdown list item：
+历史字段格式使用以下字段，每个字段都是普通 Markdown list item：
 
 ```markdown
 	- 工作流：reporting model

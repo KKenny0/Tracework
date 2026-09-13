@@ -153,6 +153,9 @@ partitioning, and transcript content is never copied into the vault.
 
 ## Development
 
+`copy-skills` synchronizes canonical → skill-local → bundle using one static map.
+`check-skills` is read-only; CI rejects uncommitted generated differences.
+
 ```bash
 npm --prefix cli run build
 npm --prefix cli run copy-skills

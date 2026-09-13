@@ -16,6 +16,15 @@ Git-only report fallback is not decision evidence here. If the raw record does
 not support the question, return the evidence gap and suggest targeted capture
 after the user clarifies the decision.
 
+## Effective Facts
+
+Use the bundled helper's effective facts, correction_history, states and
+diagnostics. `--as-of` selects an explicit knowledge cutoff; `--end` bounds
+lifecycle state by work date. Query/Roadmap also accept `--start`. Do not restore
+retracted facts or close questions from similar wording. Accepted risks remain
+separate from mitigated risks. Missing captured_at limits exact as-of replay.
+Old reports are not rewritten; refresh a requested report through its writer.
+
 ## Scope
 
 - Intra-project by default.

@@ -3,7 +3,7 @@ import os from 'node:os';
 
 export const PLUGIN_MARKETPLACE = 'tracework';
 export const PLUGIN_NAME = 'tracework';
-export const PLUGIN_VERSION = '0.10.0';
+export const PLUGIN_VERSION = '0.12.0';
 export const PLUGIN_KEY = `${PLUGIN_NAME}@${PLUGIN_MARKETPLACE}`;
 
 export function expandHome(value: string): string {

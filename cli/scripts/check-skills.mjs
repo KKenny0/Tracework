@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import { skillCopies } from './skill-copies.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
@@ -24,11 +25,6 @@ const sourceClaudePluginManifest = path.join(repoRoot, '.claude-plugin', 'plugin
 const claudeMarketplace = path.join(repoRoot, '.claude-plugin', 'marketplace.json');
 const codexMarketplace = path.join(repoRoot, '.agents', 'plugins', 'marketplace.json');
 const pluginPathsSource = path.join(repoRoot, 'cli', 'src', 'plugin-paths.ts');
-const canonicalConvention = path.join(repoRoot, 'references', 'tracework-storage-convention.md');
-const canonicalDecisionReplay = path.join(repoRoot, 'references', 'decision_replay.py');
-const canonicalReportingContract = path.join(repoRoot, 'references', 'reporting-narrative-contract.md');
-const canonicalRawHelper = path.join(repoRoot, 'scripts', 'tracework_raw.py');
-
 const officialSkills = [
   'capture',
   'recall',
@@ -49,52 +45,6 @@ const officialAssets = [
 const siteBrandAssets = [
   'logo.png',
   'mark.svg',
-];
-
-const conventionCopies = [
-  path.join(sourceSkillsDir, 'capture', 'references', 'tracework-storage-convention.md'),
-  path.join(sourceSkillsDir, 'recall', 'references', 'tracework-storage-convention.md'),
-  path.join(sourceSkillsDir, 'roadmap', 'references', 'tracework-storage-convention.md'),
-  path.join(sourceSkillsDir, 'monthly', 'references', 'tracework-storage-convention.md'),
-  path.join(bundledSkillsDir, 'capture', 'references', 'tracework-storage-convention.md'),
-  path.join(bundledSkillsDir, 'recall', 'references', 'tracework-storage-convention.md'),
-  path.join(bundledSkillsDir, 'roadmap', 'references', 'tracework-storage-convention.md'),
-  path.join(bundledSkillsDir, 'monthly', 'references', 'tracework-storage-convention.md'),
-];
-
-const reportingContractCopies = [
-  path.join(sourceSkillsDir, 'daily', 'references', 'reporting-narrative-contract.md'),
-  path.join(sourceSkillsDir, 'weekly', 'references', 'reporting-narrative-contract.md'),
-  path.join(sourceSkillsDir, 'monthly', 'references', 'reporting-narrative-contract.md'),
-  path.join(bundledSkillsDir, 'daily', 'references', 'reporting-narrative-contract.md'),
-  path.join(bundledSkillsDir, 'weekly', 'references', 'reporting-narrative-contract.md'),
-  path.join(bundledSkillsDir, 'monthly', 'references', 'reporting-narrative-contract.md'),
-];
-
-const syncedScriptPairs = [
-  [
-    path.join(sourceSkillsDir, 'roadmap', 'scripts', 'decision_graph.py'),
-    path.join(sourceSkillsDir, 'query', 'scripts', 'decision_graph.py'),
-  ],
-  [
-    path.join(bundledSkillsDir, 'roadmap', 'scripts', 'decision_graph.py'),
-    path.join(bundledSkillsDir, 'query', 'scripts', 'decision_graph.py'),
-  ],
-];
-
-const decisionReplayCopies = [
-  path.join(sourceSkillsDir, 'query', 'scripts', 'decision_replay.py'),
-  path.join(sourceSkillsDir, 'roadmap', 'scripts', 'decision_replay.py'),
-  path.join(sourceSkillsDir, 'recall', 'scripts', 'decision_replay.py'),
-  path.join(bundledSkillsDir, 'query', 'scripts', 'decision_replay.py'),
-  path.join(bundledSkillsDir, 'roadmap', 'scripts', 'decision_replay.py'),
-  path.join(bundledSkillsDir, 'recall', 'scripts', 'decision_replay.py'),
-];
-
-const rawHelperCopies = [
-  path.join(repoRoot, 'references', 'tracework_raw.py'),
-  ...['capture', 'cold-start-interview', 'daily', 'weekly', 'monthly', 'query', 'recall', 'roadmap']
-    .map(skill => path.join(sourceSkillsDir, skill, 'scripts', 'tracework_raw.py')),
 ];
 
 const errors = [];
@@ -429,62 +379,13 @@ if (exists(sourceCodexPluginManifest) && exists(sourceClaudePluginManifest) && e
   assert(pluginPathsVersion === codexVersion, `cli/src/plugin-paths.ts PLUGIN_VERSION must match plugin manifests: ${pluginPathsVersion}, ${codexVersion}`);
 }
 
-const canonical = exists(canonicalConvention) ? fs.readFileSync(canonicalConvention, 'utf-8') : null;
-assert(Boolean(canonical), 'Canonical tracework-storage-convention.md is missing');
-if (canonical) {
-  for (const copy of conventionCopies) {
-    assert(exists(copy), `Convention copy is missing: ${copy}`);
-    if (exists(copy)) {
-      const content = fs.readFileSync(copy, 'utf-8');
-      assert(content === canonical, `Convention copy is stale: ${copy}`);
-    }
-  }
-}
-
-const reportingContract = exists(canonicalReportingContract)
-  ? fs.readFileSync(canonicalReportingContract, 'utf-8')
-  : null;
-assert(Boolean(reportingContract), 'Canonical reporting-narrative-contract.md is missing');
-if (reportingContract) {
-  for (const copy of reportingContractCopies) {
-    assert(exists(copy), `Reporting contract copy is missing: ${copy}`);
-    if (exists(copy)) {
-      const content = fs.readFileSync(copy, 'utf-8');
-      assert(content === reportingContract, `Reporting contract copy is stale: ${copy}`);
-    }
-  }
-}
-
-const decisionReplay = exists(canonicalDecisionReplay) ? fs.readFileSync(canonicalDecisionReplay, 'utf-8') : null;
-assert(Boolean(decisionReplay), 'Canonical decision_replay.py is missing');
-if (decisionReplay) {
-  for (const copy of decisionReplayCopies) {
-    assert(exists(copy), `Decision replay copy is missing: ${copy}`);
-    if (exists(copy)) {
-      const content = fs.readFileSync(copy, 'utf-8');
-      assert(content === decisionReplay, `Decision replay copy is stale: ${copy}`);
-    }
-  }
-}
-
-const rawHelper = exists(canonicalRawHelper) ? fs.readFileSync(canonicalRawHelper, 'utf-8') : null;
-assert(Boolean(rawHelper), 'Canonical tracework_raw.py is missing');
-if (rawHelper) {
-  for (const copy of rawHelperCopies) {
-    assert(exists(copy), `Raw helper copy is missing: ${copy}`);
-    if (exists(copy)) {
-      assert(fs.readFileSync(copy, 'utf-8') === rawHelper, `Raw helper copy is stale: ${copy}`);
-    }
-  }
-}
-
-for (const [source, copy] of syncedScriptPairs) {
-  assert(exists(source), `Script source is missing: ${source}`);
-  assert(exists(copy), `Script copy is missing: ${copy}`);
-  if (exists(source) && exists(copy)) {
-    const sourceContent = fs.readFileSync(source, 'utf-8');
-    const copyContent = fs.readFileSync(copy, 'utf-8');
-    assert(sourceContent === copyContent, `Script copy is stale: ${copy}`);
+for (const [source, target] of skillCopies) {
+  const sourcePath = path.join(repoRoot, source);
+  const targetPath = path.join(repoRoot, target);
+  assert(exists(sourcePath), `Canonical source is missing: ${source}`);
+  assert(exists(targetPath), `Skill-local copy is missing: ${target}`);
+  if (exists(sourcePath) && exists(targetPath)) {
+    assert(fs.readFileSync(sourcePath).equals(fs.readFileSync(targetPath)), `Skill-local copy is stale: ${target}`);
   }
 }
 

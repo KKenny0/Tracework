@@ -1,8 +1,7 @@
 # Reporting Narrative Contract
 
-Use this contract for Tracework daily, weekly, and monthly reports. Reports are
-human-facing management-closure views over raw evidence. They are not agent
-handoffs, activity inventories, or substitutes for the raw record.
+Daily, Weekly and Monthly explain evidence-backed progress and remaining gates.
+Reports are human-facing judgments, not substitutes for raw records.
 
 ## Scope Before Selection
 
@@ -38,20 +37,46 @@ Read `reporting_group` from the project-level
 report the missing classification; keep them visibly separate only in `all`.
 Never guess that an unassigned project is safe for a scoped report.
 
-`profile.default_reporting_group` selects the default scope when configured.
-When a scope is **explicit** (user named `work`, `personal`, or another group)
-or **configured** via that default, unassigned projects stay excluded and must
-never be guessed into the scoped report.
+Explicit/configured scopes exclude unassigned projects. With no explicit or
+configured default, use the current project's assigned group, otherwise only
+the current project as an unassigned local lane in conversation. `all` remains
+a private combined view with separate judgments and evidence per group.
+Personal material must never displace or appear in a work report, even in its
+appendix. The headline budget applies per group, never across the vault.
 
-When no explicit group and no configured default are present, Daily, Weekly, and Monthly
-use the current project's assigned group when available. Otherwise report
-the current unassigned repository as a `local` lane, label
-it clearly, and keep workplace audience safety intact. An explicit `all`
-request remains the private combined view with separate group sections.
+## Effective Facts and State
 
-The headline budget applies per reporting group, not across the whole vault.
-Personal projects must never displace work projects from a `work` report, and
-must never appear anywhere in that report, including evidence appendices.
+For each authorized project, run `python <this-skill>/scripts/tracework_state.py
+--vault <vault> --slug <slug> --start YYYY-MM-DD --end YYYY-MM-DD`; pass `--as-of`
+only for an explicit knowledge cutoff. Use its entries, states, correction
+history and diagnostics. It applies corrections before work-period selection
+and computes state through period end. Accepted risks stay separate; conflicts
+and unassociated old questions stay visible. Do not use raw totals or historical
+question lists as current state. Reports never rewrite raw or older reports.
+For a material gap, offer Capture Day for one project/date; read sessions only
+after that action is selected, through Capture's project-root filter.
+
+## Current Conversation Evidence
+
+Daily, Weekly, and Monthly may report directly from facts already visible in
+this task. Admit a fact only when its project, reporting group (or resolved
+local lane), and work date fall within the resolved scope and period. Unknown
+project/date stays outside claims; do not infer a work date from message time.
+Use this temporary evidence alongside raw, before ranking and git fallback.
+No Capture call, raw write, project registration, transcript search, or scan
+watermark update is implied. Unsaved conversation facts are not durable memory.
+
+Deduplicate by exact entry ref, repository plus commit, or existing message
+reference first. Without an exact identifier, merge only the same state change
+in the same project and period; retain distinct acceptance gates and conflicts.
+Repeated assistant descriptions are one source, not independent verification.
+Use actual available refs; when absent say current visible conversation and do
+not invent message IDs. A clear recorded decision can support decision closure
+without a commit. Self-reported completion is recorded, not verified; direct
+visible test/tool evidence supports only the specific check it demonstrates.
+Raw/conversation disagreement remains visible with both sources and a limited
+boundary; do not silently overwrite raw or pick the more optimistic claim.
+Apply audience partition to the evidence appendix as well as the body.
 
 ## Shared Narrative Spine
 
@@ -83,9 +108,8 @@ when the uncertainty, decision, or next gate is clear.
 For each reporting group:
 
 - Write one period judgment.
-- Use three headline narratives by default. Two to four is acceptable when the
-  material genuinely requires it; never truncate a fourth material work stream
-  just to satisfy a number.
+- Use only as many headlines as the evidence supports; one meaningful change
+  is enough for sparse input. Never pad or truncate material work to meet a count.
 - Put every remaining meaningful stream in a portfolio or other-activity
   section. Coverage is not the same as headline prominence.
 - Keep risks and unresolved decisions visible even when they do not support a
@@ -101,7 +125,7 @@ Use the existing evidence grades:
 
 - `verified`: a recorded claim plus direct independent evidence that supports
   its actual wording.
-- `recorded`: a clear raw record with provenance but no independent proof.
+- `recorded`: a clear raw or admitted conversation record without independent proof.
 - `limited`: fallback, inference, conflict, or semantically incomplete input.
 
 Main prose should remain readable without report-local ids. Put `O#`, `W#`,

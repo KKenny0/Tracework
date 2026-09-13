@@ -134,6 +134,8 @@ Raw entries 是语义真相；decision index 是可重建的查询视图；Artif
 
 ## 开发
 
+`copy-skills` 按固定映射同步 canonical → skill-local → bundle；`check-skills` 只检查，不修复。CI 会拒绝未提交的生成物差异。
+
 ```bash
 npm --prefix cli run build
 npm --prefix cli run copy-skills

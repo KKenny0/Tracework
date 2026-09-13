@@ -24,6 +24,10 @@ jobs:
         run: npm --prefix cli run check-skills
       - name: Run complete test suite
         run: npm --prefix cli test
+      - name: Check generated files are committed
+        run: |
+          git diff --exit-code -- skills references plugins site/public
+          test -z "$(git ls-files --others --exclude-standard -- skills references plugins site/public)"
       - name: Run doctor smoke test
         run: |
           mkdir -p "$RUNNER_TEMP/tracework-vault"

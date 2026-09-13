@@ -10,7 +10,8 @@ description: >
   routes the session to lite, standard, or deep capture depth; explicit
   "/tracework:capture lite|standard|deep" wording overrides that route. Use day
   mode for "/tracework:capture day", "扫描今天的会话", "补录今天", or "capture
-  today". Do NOT trigger when the user is simply saying goodbye or switching
+  today". Also use for explicit correction of a stored fact ("原记录记错了",
+  "更正这条记录"). Do NOT trigger when the user is simply saying goodbye or switching
   topics.
 ---
 
@@ -36,6 +37,7 @@ needed:
   reporting metadata, Markdown fallback, and quality checks.
 - `references/capture-operations.md`: resolve config, call `tracework_raw.py`,
   write artifact dossiers, and format quiet receipts.
+- `references/capture-corrections.md`: explicit correction of a stored fact only.
 - `references/capture-day.md`: scan indexed Codex and Claude sessions for one
   date without mixing reporting groups. Read for day mode only.
 - `references/tracework-storage-convention.md`: shared schema and storage rules.
@@ -58,6 +60,8 @@ optional fields.
 ## Workflow
 
 1. **Detect mode and depth.**
+   - For a mistaken stored fact, follow `references/capture-corrections.md`.
+     Wording edits change reports only; later real changes use lifecycle_transition.
    - Default mode is session-end capture.
    - Use checkpoint mode for "checkpoint", "记一下当前进展", or
      `/tracework:capture checkpoint`.

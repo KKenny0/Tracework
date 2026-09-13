@@ -9,44 +9,46 @@ Reads accumulated raw entries from the knowledge vault and synthesizes them into
 
 Unlike weekly/monthly reports (organized by calendar period) or git history (organized by code changes), the decision roadmap is organized by **decision threads** — chains of related entries that reveal how a project's thinking evolved.
 
+## Effective Facts
+
+Use the bundled helper's effective facts, correction_history, states and
+diagnostics. `--as-of` selects an explicit knowledge cutoff; `--end` bounds
+lifecycle state by work date. Query/Roadmap also accept `--start`. Do not restore
+retracted facts or close questions from similar wording. Accepted risks remain
+separate from mitigated risks. Missing captured_at limits exact as-of replay.
+Old reports are not rewritten; refresh a requested report through its writer.
+
 ## Workflow
 
 ### Step 0: Resolve Config and Scope
 
-Resolve the vault path using the standard Tracework config resolution. The bundled
-decision graph helper performs that resolution while building the derived index:
+Default scope is the current project across all available weeks. Start once:
 
 ```bash
-python <this-skill>/scripts/decision_graph.py build --cwd "$PWD"
+python <this-skill>/scripts/decision_graph.py roadmap --cwd "$PWD" --limit-threads 20
 ```
 
-If the helper cannot resolve config, resolve manually:
-1. Check `.tracework/config.yaml` in project root
-2. Check `~/.tracework/config.yaml`
-3. If neither config exists, ask the user to run `/tracework:cold-start-interview` or configure `knowledge_vault`
+This resolves config and loads/rebuilds the derived index as needed. Use the
+pack's thread decisions, source_entry_refs and boundaries directly; do not run
+an extra build or reload all raw by default. Raw remains the source of truth.
+Check diagnostics and compare `thread_count` to `len(threads)`. If truncated,
+rerun with `--limit-threads <thread_count>` before a complete roadmap; if unable
+to complete, label the output partial with included/total threads. Missing-source
+diagnostics remain explicit and must not be described as complete live coverage.
+Read cited raw only when a detail needed for judgment is absent from the pack.
+Artifact links are navigation, never independent decision facts.
 
-Determine scope from the user's request:
+For an explicit date range, use the same roadmap helper with `--start` and
+`--end`, and `--as-of` only when requested. For cross-project requests, call it
+once per authorized project with `--slug`; keep identities distinct and check
+each pack's coverage. Do not bypass the effective view by loading old raw facts.
+If config or entries are missing, return the evidence gap in conversation;
+cold-start is an optional storage upgrade, not a reason to fabricate a roadmap.
 
-- **Default**: current project, all available weeks
-- **Cross-project**: if the user explicitly asks, read all `{slug}.json` files
-- **Date range**: if the user specifies (e.g. "from April", "last month"), filter accordingly
+### Step 1: Use Scoped Evidence
 
-### Step 1: Gather Raw Entries
-
-Read all matching raw entry files:
-
-```
-{vault}/raw/weeks/{YYYY-WNN}/{slug}.json
-```
-
-Each file contains a JSON array of entries. Load all files in scope, flatten into a single list, and sort by `timestamp` ascending.
-
-If `{vault}/raw/artifacts/{slug}.json` exists, load it as optional source
-navigation and recorded context. Artifact dossier entries can provide document
-links, topic hints, scope, and recorded key claims, but they must not create
-decision facts by themselves.
-
-If no entries are found, tell the user and stop — there is nothing to build a roadmap from.
+Default: the complete evidence pack above. Explicit date/cross-project branches: the corresponding scoped packs.
+Optional `{vault}/raw/artifacts/{slug}.json` provides recorded scope/navigation.
 
 ### Step 2: Assess Decision Signal Strength
 
@@ -151,57 +153,16 @@ Also track lifecycle-like signals when entries explicitly support them:
 - accumulating risks
 - recurring open questions
 
-Aim for 3-7 threads. If you find more, merge loosely related ones. If you find fewer than 3, the data may be too thin for a meaningful roadmap — say so and show what you can.
+Use only supported threads; one is enough. Never merge loosely related threads
+to meet a count. Preserve complete coverage or explicitly label partial output.
 
 **Mark inferred content**: When decision points, exploration paths, or abandoned alternatives are inferred rather than directly sourced from entry fields, express them with hedging language ("likely motivated by", "appears the approach shifted from X to Y") rather than presenting inference as fact.
 
 ### Step 4: Write the Roadmap
 
-Before writing the human-readable roadmap, generate the Decision Replay Index
-from raw entries:
-
-```bash
-python <this-skill>/scripts/decision_graph.py build --cwd "$PWD"
-```
-
-This writes:
-
-```
-{vault}/raw/decisions/{slug}.json
-```
-
-The index schema is `tracework.decision_replay.v1` and contains:
-`schema_version`, `project_slug`, `generated_at`, `source`, `nodes`, and
-`edges`. Each node preserves `source_entry_refs`, `confidence`
-(`explicit` or `inferred`), `decision`, `why`, `chosen`, `rejected`,
-`open_questions`, `impact`, `topic_keys`, `artifact_refs`, `evidence_refs`, and
-`thread_id`. Edges are heuristic links between entries in the same thread or
-entries that share referenced artifacts. Raw entries remain the source of truth;
-artifact dossier data is navigation and edge-hint metadata plus recorded
-context only.
-
-For a targeted agent query, use the same helper to return a compact evidence
-pack rather than asking the agent to read every raw entry:
-
-```bash
-python <this-skill>/scripts/decision_graph.py query "why did we choose the current validation boundary?" \
-  --cwd "$PWD" --mode why --limit 5
-```
-
-The query helper reads `{vault}/raw/decisions/{slug}.json` when present and can
-rebuild an in-memory index from raw entries when the file is missing. It returns
-matching decision nodes, nearby supporting nodes, rejected alternatives, open
-questions, suggested docs, and missing-evidence notes. The host coding agent
-still writes the final answer; the helper only narrows and cites the evidence.
-For roadmap generation, use the deterministic decision-thread evidence pack
-before writing narrative sections:
-
-```bash
-python <this-skill>/scripts/decision_graph.py roadmap --cwd "$PWD" --limit-threads 20
-```
-
-Use that pack to ground thread narratives and cited decision points instead of
-reconstructing those links manually. Raw entries remain the source of truth.
+Use the scoped evidence already collected. Do not run another index build or
+reconstruct pack links manually. Retain confidence, evidence_boundary,
+impact_boundary, source refs and diagnostics through the narrative.
 
 Generate a Markdown document with this structure:
 

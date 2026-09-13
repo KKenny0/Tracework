@@ -412,7 +412,7 @@ def manifest_overlaps_date(manifest: dict[str, Any], target: dt.date) -> bool:
     return first.astimezone().date() <= target <= last.astimezone().date()
 
 
-def list_day(date_value: str, scope: str) -> int:
+def list_day(date_value: str, scope: str, project_root: str | None = None) -> int:
     disabled = scan_enabled_payload(date_value, scope)
     if disabled is not None:
         print(json.dumps(disabled, ensure_ascii=False, indent=2))
@@ -438,6 +438,8 @@ def list_day(date_value: str, scope: str) -> int:
         if profile is None:
             skipped.append({"session_id": session_id, "runtime": runtime, "reason": reason or "excluded"})
             continue
+        if project_root and Path(profile['project_root']).resolve() != Path(project_root).expanduser().resolve():
+            continue
         sessions.append(
             {
                 "runtime": runtime,
@@ -458,6 +460,7 @@ def collect_session(
     runtime: str,
     session_id: str,
     chunk_number: int,
+    project_root: str | None = None,
 ) -> int:
     disabled = scan_enabled_payload(date_value, scope)
     if disabled is not None:
@@ -477,6 +480,9 @@ def collect_session(
         print(json.dumps({"date": date_value, "scope": scope, "skip": reason or "excluded"}))
         return 0
 
+    if project_root and Path(profile['project_root']).resolve() != Path(project_root).expanduser().resolve():
+        print(json.dumps({'skip': 'project_mismatch', 'date': date_value, 'scope': scope}))
+        return 0
     scanned = manifest.get("scanned_through")
     local_watermark = scanned.get(date_value) if isinstance(scanned, dict) else None
     raw_mark = raw_watermark(profile, runtime, session_id, target)
@@ -564,10 +570,12 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser = subparsers.add_parser("list-day", help="List scoped session manifests without reading transcripts")
     list_parser.add_argument("--date", default=dt.date.today().isoformat())
     list_parser.add_argument("--scope", required=True)
+    list_parser.add_argument("--project-root", help="Restrict to one authorized canonical project root")
 
     collect = subparsers.add_parser("collect-session", help="Return one bounded normalized transcript chunk")
     collect.add_argument("--date", default=dt.date.today().isoformat())
     collect.add_argument("--scope", required=True)
+    collect.add_argument("--project-root", help="Recheck project before reading transcript")
     collect.add_argument("--runtime", required=True, choices=("codex", "claude"))
     collect.add_argument("--session-id", required=True)
     collect.add_argument("--chunk", type=int, default=1)
@@ -585,9 +593,9 @@ def main() -> int:
     if args.command == "observe":
         return observe()
     if args.command == "list-day":
-        return list_day(args.date, args.scope)
+        return list_day(args.date, args.scope, args.project_root)
     if args.command == "collect-session":
-        return collect_session(args.date, args.scope, args.runtime, args.session_id, args.chunk)
+        return collect_session(args.date, args.scope, args.runtime, args.session_id, args.chunk, args.project_root)
     if args.command == "mark-scanned":
         return mark_scanned(args.runtime, args.session_id, args.date, args.through)
     return 1

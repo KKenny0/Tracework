@@ -352,6 +352,25 @@ class SessionScanTest(unittest.TestCase):
         collected = self.collect_session("codex", "unknown-session")
         self.assertEqual(collected["skip"], "unsupported_transcript")
 
+    def test_targeted_project_filter_and_partial_read_do_not_advance(self) -> None:
+        other = self.make_project('other-work', 'work', 'Other Work')
+        transcript = self.root / 'targeted.jsonl'
+        write_jsonl(transcript, [codex_message(target_timestamp(14), 'user', 'x' * 70000)])
+        self.observe('selected', self.work, transcript)
+        self.observe('excluded', other, transcript)
+        before = {str(p): p.read_bytes() for p in self.index.glob('*/*.json')}
+        listed = json.loads(self.run_helper('list-day', '--date', TARGET_DATE, '--scope', 'work',
+                                           '--project-root', str(self.work)).stdout)
+        self.assertEqual([s['session_id'] for s in listed['sessions']], ['selected'])
+        excluded = json.loads(self.run_helper('collect-session', '--date', TARGET_DATE, '--scope', 'work',
+            '--runtime', 'codex', '--session-id', 'excluded', '--project-root', str(self.work)).stdout)
+        self.assertEqual(excluded['skip'], 'project_mismatch')
+        selected = json.loads(self.run_helper('collect-session', '--date', TARGET_DATE, '--scope', 'work',
+            '--runtime', 'codex', '--session-id', 'selected', '--project-root', str(self.work), '--chunk', '1').stdout)
+        self.assertGreater(selected['session']['chunk_count'], 1)
+        self.assertEqual({str(p): p.read_bytes() for p in self.index.glob('*/*.json')}, before)
+        self.assertFalse((self.vault / 'raw/weeks').exists())
+
     def test_large_session_returns_one_bounded_chunk_at_a_time(self) -> None:
         transcript = self.root / "large.jsonl"
         write_jsonl(

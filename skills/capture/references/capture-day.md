@@ -146,3 +146,18 @@ If nothing was written, omit the forward line and keep the skip reasons clear.
 
 Do not echo prompts, assistant replies, transcript paths, or personal project
 names excluded by scope.
+
+## Targeted Evidence Recovery
+
+When a report proposes recovery for one project and date, wait for the user to
+select that action. Pass `--project-root <authorized-root>` to both list-day
+and collect-session; collect rechecks canonical project ownership before any
+transcript or raw-watermark read. Candidate metadata is only a possible source,
+not proof that acceptance evidence exists.
+
+For durable recovery, review the selected session's complete unscanned daily
+increment before appending useful signals or marking reviewed/no-signal. A
+partial read must not use captured_through to advance the full watermark. For
+temporary evidence inspection, neither append raw nor mark-scanned. After a
+successful recovery, revise only affected report claims with the report's
+normal protected update behavior.

@@ -7,14 +7,15 @@ Full command reference. For first use, prefer [Quick Start](./quick-start): try 
 ### Daily
 
 `/tracework:daily [work|personal|all]` writes one daily judgment per reporting
-group, normally three state-change headlines, complete portfolio coverage, and
-the next gate.
+group, necessary progress, and the next gate in short prose. One supported
+change is enough. Protected per-date/per-group updates preserve user edits;
+a conflict returns a draft instead of overwriting the file.
 
 ### Weekly
 
 Three modes:
 
-- **quick**: `这周做了啥` / `quick weekly` — 5–7 conversation bullets plus
+- **quick**: `这周做了啥` / `quick weekly` — 1–7 conversation bullets plus
   carried-forward items; no file write.
 - **brief** (default): `/tracework:weekly` / write the weekly report —
   objective-anchored management brief covering actual change, variance, and
@@ -42,6 +43,16 @@ evidence responsibility for one claim.
 `/tracework:monthly [work|personal|all]` uses raw entries as semantic truth and
 Daily/Weekly as prior human judgments. It produces phase arcs, recurring risks,
 and next-month closure targets.
+
+Reports can use current visible conversation facts when project, group and work
+date are known. They deduplicate these with raw/git and preserve conflicts.
+This does not capture facts into long-term memory or scan other conversations.
+
+Stored factual mistakes can be corrected through Capture. All six readers then
+use the corrected fact in its original work period; explicit as-of preserves
+the knowledge boundary. Accepted risks and unresolved conflicts stay visible.
+Existing reports change only when you request a refresh. Targeted recovery
+reads only the project/date you select and leaves temporary reads unsaved.
 
 ## Evidence Foundation
 

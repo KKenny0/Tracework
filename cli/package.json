@@ -22,7 +22,10 @@
     "test:session-scan": "python3 -B ../benchmarks/test_tracework_sessions.py",
     "test:semantic-admission": "python3 -B ../benchmarks/test_weekly_semantic_admission.py",
     "test:regression": "node ../benchmarks/run-regression.mjs",
-    "test": "npm run build && npm run test:doctor && npm run test:evidence-flow && npm run test:session-scan && npm run test:semantic-admission && npm run test:regression"
+    "test": "npm run build && npm run test:doctor && npm run test:evidence-flow && npm run test:session-scan && npm run test:semantic-admission && npm run test:daily-reporting && npm run test:skill-copies && npm run test:state && npm run test:regression",
+    "test:daily-reporting": "python3 -B ../benchmarks/test_daily_reporting.py",
+    "test:skill-copies": "node scripts/test-skill-copies.mjs",
+    "test:state": "python3 -B ../benchmarks/test_tracework_state.py"
   },
   "engines": {
     "node": ">=18.0.0"

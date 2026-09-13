@@ -1,6 +1,6 @@
 {
   "name": "tracework",
-  "version": "0.10.0",
+  "version": "0.12.0",
   "description": "Turn agent work into evidence-backed progress reports — daily, weekly, and monthly, with local decision replay when work is questioned later.",
   "author": {
     "name": "Kennywu",

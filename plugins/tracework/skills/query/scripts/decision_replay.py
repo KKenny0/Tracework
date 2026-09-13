@@ -19,6 +19,7 @@ import sys
 from typing import Any
 
 from tracework_raw import write_json_atomic
+from tracework_state import read_view
 
 try:
     import yaml  # type: ignore
@@ -29,7 +30,7 @@ except Exception:  # pragma: no cover - optional dependency
 SCHEMA_VERSION = "tracework.decision_replay.v1"
 QUERY_SCHEMA_VERSION = "tracework.decision_query.v1"
 ROADMAP_SCHEMA_VERSION = "tracework.decision_roadmap.v1"
-INDEX_BUILDER_VERSION = 3
+INDEX_BUILDER_VERSION = 4
 SAFE_SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 EXPLICIT_FIELDS = (
     "motivation",
@@ -711,11 +712,22 @@ def index_is_current(index: dict[str, Any], entries: list[dict[str, Any]], artif
     return generated_at is not None and generated_at >= latest_entry
 
 
-def build_index(vault: Path, slug: str, generated_at: str | None = None) -> dict[str, Any]:
+def build_index(vault: Path, slug: str, generated_at: str | None = None, start=None, end=None, as_of=None) -> dict[str, Any]:
     slug = validate_project_slug(slug)
     entries, raw_paths = load_raw_entries(vault, slug)
     artifacts, artifact_path = load_artifacts(vault, slug)
-    nodes = build_nodes(entries, slug, artifacts)
+    view = read_view(vault, slug, start, end, as_of)
+    nodes = build_nodes(view['entries'], slug, artifacts)
+    for node, entry in zip(nodes, [e for e in view['entries'] if isinstance(e.get('summary'), str) and isinstance(e.get('context'), str)]):
+        logical = entry.get('_logical_id', node['id'])
+        node['logical_id'] = logical
+        node['current_states'] = [state for state in view['states'] if state['entry_id'] == logical]
+        if any(state['state'] == 'conflict' for state in node['current_states']):
+            node['evidence_boundary'] = 'limited'
+            node['evidence_gap'] = 'Conflicting lifecycle state; do not assert closure.'
+        node['recorded_open_questions'] = node['open_questions']
+        closed = {state['subject'] for state in node['current_states'] if state['state'] in ('resolved', 'closed')}
+        node['open_questions'] = [q for i, q in enumerate(node['open_questions']) if entry.get('_question_subjects', [f'open_question:{logical}:{n}' for n, _ in enumerate(node['open_questions'])])[i] not in closed]
     edges = build_edges(nodes)
     all_thread_ids = [str(n.get("thread_id", "")) for n in nodes]
     thread_merge_hints = merge_suggestions(dedupe(all_thread_ids))
@@ -740,6 +752,10 @@ def build_index(vault: Path, slug: str, generated_at: str | None = None) -> dict
         "source": source,
         "nodes": nodes,
         "edges": edges,
+        "states": view['states'],
+        "correction_history": view['correction_history'],
+        "diagnostics": view['diagnostics'],
+        "period": view['period'],
     }
 
 
@@ -797,7 +813,7 @@ def command_build(args: argparse.Namespace) -> int:
     return 0
 
 
-def load_index(vault: Path, slug: str) -> dict[str, Any]:
+def load_index(vault: Path, slug: str, start=None, end=None, as_of=None) -> dict[str, Any]:
     slug = validate_project_slug(slug)
     path = vault / "raw" / "decisions" / f"{slug}.json"
     if path.exists():
@@ -808,14 +824,14 @@ def load_index(vault: Path, slug: str) -> dict[str, Any]:
         if isinstance(data, dict):
             entries, paths = load_raw_entries(vault, slug)
             if missing_raw_sources(data, entries, paths):
-                return {**data, "nodes": [], "edges": [], "diagnostics": [
+                return {**data, "nodes": [], "edges": [], "states": [], "correction_history": [], "diagnostics": [
                     "Raw sources missing or truncated; existing index preserved, claims unavailable."
                 ]}
             artifacts, _ = load_artifacts(vault, slug)
-            if index_is_current(data, entries, artifacts):
+            if not any((start, end, as_of)) and index_is_current(data, entries, artifacts):
                 return data
-            return build_index(vault, slug)
-    return build_index(vault, slug)
+            return build_index(vault, slug, start=start, end=end, as_of=as_of)
+    return build_index(vault, slug, start=start, end=end, as_of=as_of)
 
 
 def recent_decision_nodes(index: dict[str, Any], limit: int) -> list[dict[str, Any]]:
@@ -996,6 +1012,8 @@ def compact_node(node: dict[str, Any], terms: list[str] | None = None, mode: str
         "impact": node.get("impact"),
         "decision_threads": node.get("decision_threads", []),
         "lifecycle_transition": node.get("lifecycle_transition"),
+        "logical_id": node.get('logical_id', node.get('id')),
+        "current_states": node.get('current_states', []),
         "topic_keys": node.get("topic_keys", []),
         "thread_id": node.get("thread_id"),
         "artifact_refs": node.get("artifact_refs", []),
@@ -1126,6 +1144,9 @@ def build_query_pack(index: dict[str, Any], query: str, mode: str, limit: int) -
     return {
         "schema_version": QUERY_SCHEMA_VERSION,
         "project_slug": index.get("project_slug"),
+        "states": index.get('states', []),
+        "correction_history": index.get('correction_history', []),
+        "period": index.get('period'),
         "generated_at": current_timestamp(),
         "query": query,
         "mode": mode,
@@ -1168,6 +1189,9 @@ def confidence_mix(nodes: list[dict[str, Any]]) -> str:
 
 
 def node_is_risk(node: dict[str, Any]) -> bool:
+    risk_states = [state for state in node.get('current_states', []) if state['subject'].startswith('risk:')]
+    if risk_states and all(state['state'] in ('mitigated', 'resolved', 'closed', 'accepted') for state in risk_states):
+        return False
     fields = (
         node.get("entry_type"),
         node.get("archetype"),
@@ -1289,6 +1313,9 @@ def build_roadmap_pack(index: dict[str, Any], limit_threads: int = 20) -> dict[s
         "schema_version": ROADMAP_SCHEMA_VERSION,
         "diagnostics": as_string_list(index.get("diagnostics")),
         "project_slug": index.get("project_slug"),
+        "states": index.get('states', []),
+        "correction_history": index.get('correction_history', []),
+        "period": index.get('period'),
         "generated_at": current_timestamp(),
         "source": {
             "decision_index_generated_at": index.get("generated_at"),
@@ -1319,7 +1346,7 @@ def command_query(args: argparse.Namespace) -> int:
     cfg, _ = resolve_config(cwd)
     vault = Path(args.vault).expanduser().resolve() if args.vault else Path(str(cfg["knowledge_vault"]))
     slug = validate_project_slug(args.slug) if args.slug else project_slug(cwd, vault, cfg.get("project_slug"))
-    index = load_index(vault, slug)
+    index = load_index(vault, slug, args.start, args.end, args.as_of)
     pack = build_query_pack(index, args.query, args.mode, max(args.limit, 1))
     print(json.dumps(pack, ensure_ascii=False, indent=2))
     return 0
@@ -1330,7 +1357,7 @@ def command_roadmap(args: argparse.Namespace) -> int:
     cfg, _ = resolve_config(cwd)
     vault = Path(args.vault).expanduser().resolve() if args.vault else Path(str(cfg["knowledge_vault"]))
     slug = validate_project_slug(args.slug) if args.slug else project_slug(cwd, vault, cfg.get("project_slug"))
-    index = load_index(vault, slug)
+    index = load_index(vault, slug, args.start, args.end, args.as_of)
     pack = build_roadmap_pack(index, max(args.limit_threads, 1))
     print(json.dumps(pack, ensure_ascii=False, indent=2))
     return 0
@@ -1372,6 +1399,10 @@ def build_parser() -> argparse.ArgumentParser:
     roadmap_parser.add_argument("--slug", help="Project slug override")
     roadmap_parser.add_argument("--limit-threads", type=int, default=20, help="Maximum decision threads")
     roadmap_parser.set_defaults(func=command_roadmap)
+    for scoped_parser in (query_parser, roadmap_parser):
+        scoped_parser.add_argument('--start', help='Work-period start YYYY-MM-DD')
+        scoped_parser.add_argument('--end', help='Work-period end YYYY-MM-DD')
+        scoped_parser.add_argument('--as-of', help='Knowledge cutoff ISO timestamp')
     return parser
 
 
