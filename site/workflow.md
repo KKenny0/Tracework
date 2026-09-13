@@ -64,3 +64,9 @@ Roadmap <- decision evidence pack
 
 Raw entries remain semantic truth. Report-local evidence ids belong to the
 appendix, not the raw schema or spoken narrative.
+
+Daily, Weekly, and Monthly can also use scoped facts already visible in the
+current conversation, without capturing them or scanning other sessions.
+Stored entries pass through the shared corrected view before reporting;
+corrections stay in the original work period, and an explicit as-of cutoff
+preserves what was known then. Existing reports require an explicit refresh.

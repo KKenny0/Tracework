@@ -15,7 +15,7 @@ hero:
 
 features:
   - title: Report first
-    details: Try a daily or weekly report right after install, even in conversation only. Without accumulated records, use git for limited coverage and mark the evidence boundary.
+    details: Try a daily or weekly report right after install, even in conversation only. Use scoped facts already visible in the conversation before capturing; git-only coverage stays limited.
   - title: Close the day and week
     details: Explain what changed, why it matters, and the next gate. Markdown brief by default; a presentation outline only when you ask.
   - title: Wrap up to keep the why

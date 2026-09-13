@@ -2,7 +2,8 @@
 
 [Back to README](../README.md)
 
-Tracework needs only a vault path and project reporting identity for normal use.
+Reports can be tried in the current conversation without configuration. Durable
+storage needs a vault path and project reporting identity.
 
 ## Minimum Config
 
@@ -55,10 +56,10 @@ The project registry mirrors the group:
 }
 ```
 
-### Upgrading from 0.2
+### Unassigned Projects
 
-Existing project configs and registry rows remain valid, but rows without a
-reporting group are treated as `unassigned`. Scoped reports exclude them rather
+Project configs and registry rows without a reporting group are treated as
+`unassigned`. Scoped reports exclude them rather
 than guessing that they are safe for work or personal output. Run
 `/tracework:cold-start-interview` in each existing project or add
 `profile.reporting_group` and the registry field manually.

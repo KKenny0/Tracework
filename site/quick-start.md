@@ -33,9 +33,10 @@ You can also close today first: `write the daily report` / `/tracework:daily`.
 You can see a result in the conversation without configuring a vault. If the
 current project is still unassigned, an implicit trial reports it as `local`
 instead of pretending it is safe `work`. An explicit or configured `work` scope excludes
-unassigned projects and explains how to fix the classification. Without raw
-entries, reports may use meaningful git activity as `limited` coverage. They do
-not invent intent, decisions, or verified impact.
+unassigned projects and explains how to fix the classification. Before Capture, reports can also use facts already visible in the current
+conversation when the project, group, and work date are known. This does not
+save long-term memory or read other conversations. Git-only coverage remains
+`limited`; reports do not invent intent, decisions, or verified impact.
 
 ## 3. Turn On Durable Storage When You Need It
 
@@ -49,8 +50,8 @@ partitioning, run:
 Choose the local vault, project identity, and reporting group such as `work`
 or `personal`.
 
-After upgrading from 0.2, run it once in each existing project. Unassigned
-projects are excluded from scoped reports rather than guessed into work output.
+Assign a group to each project you want in a scoped report. Unassigned projects
+are excluded from work or personal output.
 
 Common closure commands:
 
@@ -95,3 +96,13 @@ reads transcript content.
 - `/tracework:roadmap` for a long-range decision review
 
 These are lower-frequency surfaces; they do not need to become daily habits.
+
+## 6. Update or Correct What You Saved
+
+Daily updates preserve hand edits and return a draft if the file changed after
+it was read. To correct a stored fact, ask Capture to correct the record and
+identify the original record, correct fact, and reason. The original remains
+stored; all six readers use the corrected view in its original work period.
+Existing reports change only when you request a refresh. Once corrections exist,
+keep a correction-aware plugin installed rather than downgrading to an older
+reader. See [Skills](./skills) for historical knowledge cutoffs and state handling.

@@ -56,3 +56,7 @@ Roadmap <- decision evidence pack
 ```
 
 Raw entries 是语义真相。报告本地证据编号只属于附录，不进入 raw schema 或口头主叙事。
+
+Daily、Weekly、Monthly 也能使用当前对话中范围明确的事实，不会因此自动 Capture
+或扫描其他 session。已保存的记录先经过共享更正视图再参与报告；更正在原工作期间
+生效，明确指定 as-of 时保留当时的知悉边界。已有报告需要明确请求才会刷新。

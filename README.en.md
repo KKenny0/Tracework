@@ -21,9 +21,11 @@ Say “wrap up” to keep the durable facts. Generate daily, weekly, and monthly
 reports when you need them. When the work is questioned later, replay why a
 choice was made.
 
-Records stay in your own local vault. Without accumulated entries, reports can
-still use git for `limited` coverage and mark the evidence boundary instead of
-inventing intent or outcomes.
+Records stay in your own local vault. You can report before capturing: facts
+already visible in the current conversation can provide temporary evidence when
+the project, group, and work date are known. Reporting does not save those facts
+to long-term memory or read other conversations. Git-only reports remain
+`limited`, with explicit gaps instead of invented intent or outcomes.
 
 ## Try It First
 
@@ -90,14 +92,16 @@ Daily, Weekly, and Monthly partition scope before selecting the main story:
 - `all`: a private combined view, with a separate judgment and headline set for
   each group.
 
-The default three-headline budget applies per reporting group, not across the
-whole vault. Other meaningful work remains visible in portfolio status instead
-of disappearing because it was not selected as a headline.
+Weekly resolves goal sources within each group, then explains actual change,
+variance, and next commitments without a fixed headline count. The brief keeps
+information that changes management judgment; its appendix preserves full
+commitments, work coverage, and evidence.
 
-When upgrading from 0.2, projects without `reporting_group` become
-`unassigned` and are excluded from scoped reports for safety. Run
-`/tracework:cold-start-interview` once in each project or add the field
-manually.
+Scope uses your explicit choice, then the configured default, then the current
+project’s group. If none is known, the report stays in the conversation as a
+`local` view of the current project. Unassigned projects cannot enter `work` or
+`personal`; run `/tracework:cold-start-interview` to assign a group. Capture Day
+stops before reading sessions when scope is unresolved.
 
 ## Skills
 
@@ -113,16 +117,14 @@ manually.
 | `/tracework:roadmap` | Low / advanced | A long-range decision-thread narrative |
 | `/tracework:cold-start-interview` | One-time upgrade | Vault, project identity, and reporting group |
 
-When explicitly asked for a `weekly PPT`, Tracework produces a 6-10 slide
-outline for an individual contributor reporting within a department. Core
-technical results follow three questions: why it changed, how the new mechanism
-works, and whether it is effective. Before/After establishes the state change;
-solution logic and implementation narrative explain the main path, branches,
-fallbacks, and invariants; data, tests, or a visible measurement gap establish
-the evidence boundary. The main deck keeps at most two or three logic diagrams,
-does not manufacture architecture diagrams for routine maintenance, and leaves
-raw evidence mappings in the appendix. The command produces an outline, not a
-rendered `.pptx` file.
+When explicitly asked for a `weekly PPT`, Tracework produces a standalone
+PPT-ready Markdown Deck with only the necessary pages. Unusual length triggers
+compression review rather than a fixed page limit. By default, it serves a
+same-department weekly meeting: work goals, this week's results or final choices,
+the shortest necessary rationale and evidence boundary, then next-week plans.
+Sources are reopened only for selected claims; the public appendix keeps a
+compact evidence map. The Markdown is readable on its own; a rendered `.pptx`
+is a separate visual translation.
 
 Decision replay is a trust mechanism, not a daily operation. A reader can drill
 from a report claim to raw entries, rejected alternatives, risks, and direct
@@ -132,6 +134,17 @@ instead of inventing history.
 Tracework is not a meeting-notes tool, approval workflow, performance-packaging
 layer, employee-monitoring surface, or generic office suite. Activity counts,
 commit counts, and lines of code describe coverage; they do not prove outcomes.
+
+## Updating Reports and Correcting Records
+
+Daily updates protect existing content by date and group; hand edits or
+concurrent changes return a draft while preserving the file. For a mistaken
+stored fact, ask Capture to correct the record and provide the original record
+and the correct fact. Corrections preserve original records and apply in the
+original work period; an explicit historical knowledge cutoff (as-of) uses only
+what was known then. Daily, Weekly, Monthly, Recall, Query, and Roadmap share
+that corrected view. Existing reports change only when you request a refresh;
+once corrections exist, do not downgrade to readers that ignore them.
 
 ## Storage
 
