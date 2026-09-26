@@ -33,9 +33,8 @@ brief template. Bare PPT/slides selects this mode only within a weekly request.
 ## Resolve Range, Scope, and Target
 
 - Default period: current Monday through today.
-- Resolve project then global config with
-  `python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report`.
-  Add `--scope` only for explicit user choice; use scope, scope_source, reason.
+- Use the shared `read-report --report weekly` entry with the target dates.
+  Add `--scope` only for explicit user choice; use its scope and selected projects.
 - Apply the shared contract's scope-before-selection rules to every input and
   appendix. Explain excluded/empty scope without leaking titles or refs.
   Implicit-local is current-project-only, conversation-only and unassigned;
@@ -48,8 +47,8 @@ brief template. Bare PPT/slides selects this mode only within a weekly request.
 
 ## Evidence Workflow
 
-1. Read effective facts and period-end states through the shared contract’s
-   `tracework_state.py` route for each authorized project.
+1. Use the shared reader’s grouped facts, states and diagnostics. Apply its
+   failure and write policy: partial coverage defaults to a conversation draft.
 2. Apply the shared conversation admission rules.
 3. For brief/slides, read available previous Weekly commitments as editorial
    context and explicit goal sources only as needed. Preserve confirmed versus

@@ -32,8 +32,7 @@ Resolve configuration in this order:
 2. `~/.tracework/config.yaml`
 
 The primary output defaults to `{vault}/Daily Note.md`, overridable through
-`daily_note.path`. Project paths come from `daily_note.repos`, then
-`{vault}/raw/projects.json`, then the current repo.
+`daily_note.path`. The shared reader selects projects; `daily_note.repos` restricts Daily only.
 
 If no vault can be resolved, return the report in the conversation. Do not
 create an unrequested vault. Do not block on cold-start. Optionally add one
@@ -46,9 +45,8 @@ durable multi-day storage and strict audience partition, not a ticket to try.
 
 ### Scope resolution
 
-Run `python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report`
-as defined in `references/reporting-narrative-contract.md`; add `--scope` only
-for an explicit user choice. Use its `scope`, `scope_source`, and `reason`.
+Use the shared contract's `read-report --report daily` command with the target
+dates; add `--scope` only for explicit user choice. Use the returned scope and projects.
 An assigned current-project group is a normal exact-group scope;
 `scope_source=implicit-local` activates local first-run below.
 
@@ -105,22 +103,16 @@ that capture or more work signal will improve the next run. Do not error.
      first-run and no-vault runs stay in conversation even if a vault path
      exists, so unassigned content is not written into workplace Daily Note.
 
-2. **Partition projects before ranking.**
-   - Read each project `profile.reporting_group`, then its `projects.json`
-     `reporting_group`.
-   - Apply First-Run and Local Fallback together with the audience-safety rules
-     in the shared narrative contract.
-   - For normal scoped reports, exclude unassigned projects and report the
-     missing classification. Show unassigned separately only in `all`.
-   - For local first-run, keep a single `local` lane for the current repo.
+2. **Read scoped effective facts.**
+   - Run the shared `read-report --report daily` entry for each requested date, with start=end.
+   - Use its groups, project views, correction history, states and diagnostics.
+   - Apply its failure and write policy before continuing. A partial read returns
+     a conversation draft unless saving that incomplete draft was requested.
 
-3. **Collect effective raw entries.**
-   - Use the shared contract's `tracework_state.py` invocation per authorized
-     project and target date. Preserve correction history, period-end states and
-     diagnostics; do not directly rank historical/retracted records.
+3. **Prepare evidence.**
    - Prefer factual top-level fields and optional `reporting` boundaries.
-   - Artifact dossiers are optional navigation. Do not copy full artifacts.
-   - Without a vault, skip raw collection and continue with git coverage.
+   - Artifact dossiers are optional navigation for selected projects only.
+   - A null view means no vault; continue with scoped conversation and Git.
 
 4. **Admit current conversation evidence, then check git coverage.**
    - Apply Current Conversation Evidence in the shared contract; scope, date,

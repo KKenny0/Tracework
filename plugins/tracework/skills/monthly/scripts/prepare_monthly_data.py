@@ -31,7 +31,7 @@ prepare_monthly_data.py - 从月度归档中提取信号并构建总结骨架（
 
 import argparse
 import calendar
-from tracework_state import read_view
+from tracework_raw import read_report
 import json
 import os
 import re
@@ -439,45 +439,20 @@ def parse_monthly_file(filepath, month_key=None):
     }
 
 
-def load_monthly_raw_entries(vault_path, month_key, project_slugs=None, as_of=None, views=None):
-    """Load raw entries for the month without rewriting or interpreting them."""
-    vault = Path(vault_path).expanduser().resolve()
-    weeks_dir = vault / 'raw' / 'weeks'
-    projects_file = vault / 'raw' / 'projects.json'
-    registry = {}
-    if projects_file.is_file():
-        try:
-            projects = json.loads(projects_file.read_text(encoding='utf-8'))
-            for project in projects if isinstance(projects, list) else []:
-                if not isinstance(project, dict):
-                    continue
-                slug = project.get('slug')
-                if isinstance(slug, str) and slug:
-                    registry[slug] = project
-        except (json.JSONDecodeError, OSError):
-            pass
-
+def monthly_raw_entries(report_view):
+    """Adapt the shared scoped facts to the existing monthly skeleton."""
     collected = []
-    if not weeks_dir.is_dir():
-        return collected
-
-    slugs = project_slugs if project_slugs is not None else sorted({p.stem for p in weeks_dir.glob('*/*.json')})
-    year, month = map(int, month_key.split('-'))
-    end = f'{month_key}-{calendar.monthrange(year, month)[1]:02d}'
-    for slug in slugs:
-        view = read_view(vault, slug, month_key + '-01', end, as_of)
-        if views is not None:
-            views.append(view)
-        project = registry.get(slug, {})
-        for entry in view['entries']:
-            collected.append({
-                'project_slug': slug,
-                'project_name': project.get('name') or slug,
-                'reporting_group': project.get('reporting_group') or 'unassigned',
-                'source_path': entry['_source_path'],
-                'entry_index': entry['_source_index'],
-                'entry': {k: v for k, v in entry.items() if not k.startswith('_')},
-            })
+    for projects in report_view['groups'].values():
+        for project in projects:
+            for entry in (project['view'] or {}).get('entries', []):
+                collected.append({
+                    'project_slug': project['slug'],
+                    'project_name': project['name'],
+                    'reporting_group': project['reporting_group'],
+                    'source_path': entry['_source_path'],
+                    'entry_index': entry['_source_index'],
+                    'entry': {k: v for k, v in entry.items() if not k.startswith('_')},
+                })
     return collected
 
 
@@ -909,9 +884,9 @@ def main():
     )
     parser.add_argument('--input', default=None,
                         help='月度归档文件路径 (YYYY-MM.md)')
-    parser.add_argument('--signals-output', required=True,
+    parser.add_argument('--signals-output',
                         help='信号 JSON 输出文件路径')
-    parser.add_argument('--skeleton-output', required=True,
+    parser.add_argument('--skeleton-output',
                         help='骨架 JSON 输出文件路径')
     parser.add_argument('--vault', default=None,
                         help='Tracework vault path; when provided, raw entries are the semantic source')
@@ -929,6 +904,11 @@ def main():
                         default=DEFAULT_REAL_PROJECT_MIN_DAYS,
                         help=f'自动检测真实项目的最少出现天数阈值 (默认: {DEFAULT_REAL_PROJECT_MIN_DAYS})')
 
+    parser.add_argument('--cwd', default=os.getcwd(), help='Current project root')
+    parser.add_argument('--scope', help='Explicit user-selected report group or all')
+    parser.add_argument('--end', help='Period end YYYY-MM-DD; defaults to month end')
+    parser.add_argument('--save-draft', action='store_true', help='Explicit request to save partial evidence')
+    parser.add_argument('--overwrite', action='store_true', help='Explicit request to overwrite context outputs')
     parser.add_argument('--project-slug', action='append', help='Authorized project; repeat for scoped multi-project review')
     parser.add_argument('--as-of', help='Knowledge cutoff ISO timestamp')
     args = parser.parse_args()
@@ -943,11 +923,21 @@ def main():
     except ValueError:
         parser.error("提供 --month YYYY-MM，或使用 YYYY-MM.md 归档")
 
-    signals = parse_monthly_file(args.input, target_month)
-    signals['effective_views'] = []
-    signals['raw_entries'] = (
-        load_monthly_raw_entries(args.vault, target_month, args.project_slug, args.as_of, signals['effective_views']) if args.vault else []
+    if args.end and not args.end.startswith(target_month + '-'):
+        parser.error('--end must be within the target month')
+    year, month = map(int, target_month.split('-'))
+    report_view = read_report(
+        Path(args.cwd), 'monthly', target_month + '-01',
+        args.end or f'{target_month}-{calendar.monthrange(year, month)[1]:02d}',
+        args.scope, args.project_slug, Path(args.vault) if args.vault else None, args.as_of,
     )
+    signals = parse_monthly_file(args.input if report_view['status'] != 'blocked' else None, target_month)
+    signals['report_context'] = {k: v for k, v in report_view.items() if k != 'groups'}
+    signals['effective_views'] = [
+        dict(project['view'], reporting_group=project['reporting_group'])
+        for projects in report_view['groups'].values() for project in projects if project['view'] is not None
+    ]
+    signals['raw_entries'] = monthly_raw_entries(report_view)
 
     # light 模式：精简 signals 中的 entries
     if args.summary_mode == 'light':
@@ -961,12 +951,23 @@ def main():
         ]
 
     # --- Step 2: 构建骨架 ---
-    print("正在构建骨架...")
     skeleton = build_review_skeleton(
         signals, args.summary_mode, args.evidence_mode,
         real_projects=args.real_projects,
         real_project_min_days=args.real_project_min_days,
     )
+
+    skeleton['report_context'] = signals['report_context']
+    if report_view['status'] != 'complete':
+        skeleton['warnings'].append('Report coverage is incomplete; do not claim a complete period review.')
+    policy = report_view['write_policy']
+    if policy == 'conversation_only' or (policy == 'explicit_save_only' and not args.save_draft):
+        print(json.dumps({'signals': signals, 'skeleton': skeleton}, ensure_ascii=False, indent=2))
+        return 2 if report_view['status'] == 'blocked' else 0
+    if not args.signals_output or not args.skeleton_output:
+        parser.error('Provide --signals-output and --skeleton-output for scoped vault output')
+    if not args.overwrite and any(Path(p).exists() for p in (args.signals_output, args.skeleton_output)):
+        parser.error('Output exists; use --overwrite only for an explicit update request')
 
     # --- Step 3: 写出两个 JSON 文件 ---
     for output_path in [args.signals_output, args.skeleton_output]:
@@ -1006,4 +1007,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

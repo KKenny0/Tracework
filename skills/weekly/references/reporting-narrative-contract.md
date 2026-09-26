@@ -5,56 +5,54 @@ Reports are human-facing judgments, not substitutes for raw records.
 
 ## Scope Before Selection
 
-Before reading report material, run the bundled resolver:
+Read scoped facts through the shared entry:
 
 ```bash
-python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report
+python <this-skill>/scripts/tracework_raw.py read-report --cwd <project-root> \
+  --report <daily|weekly|monthly> --start YYYY-MM-DD --end YYYY-MM-DD
 ```
 
-Pass `--scope <group-or-all>` only when the user explicitly selected it.
-Use the returned `scope`, `scope_source`, and `reason`; do not substitute `work`.
-Precedence is explicit user scope → configured `profile.default_reporting_group`
-→ current project's group (project config, then matching registry) → unresolved.
-Configuration merges project over global values as usual. An unresolved report
-returns `scope=local`, `scope_source=implicit-local`: current project only,
-conversation output, no files. A named group literally called `local` remains
-an exact group when its source is explicit/configured/project.
-For Capture Day, use `--purpose session`; unresolved scope is null and must stop
-before list/collect or transcript reads. This resolver reads configuration and
-registry metadata only; it does not authorize reading other projects.
+Monthly calls the same reader. Pass `--scope <group-or-all>`
+only for explicit user choice, repeat `--project-slug` to narrow projects, and
+pass `--as-of` only for an explicit knowledge cutoff. Filters only narrow scope. Use returned `scope`, `scope_source`, `reason`, `groups` and failures;
+do not reconstruct the selection or read excluded projects through another path.
 
-Partition the resolved scope before ranking work:
+Scope precedence: explicit user choice → configured `profile.default_reporting_group`
+→ current project's group → implicit-local. Project config overrides global
+settings. Implicit-local means current project only, conversation only, no files.
+An explicitly named `local` group remains an exact group, not this fallback.
 
-- `<group>`: include only projects whose `reporting_group` exactly matches the
-  requested group, commonly `work` or `personal`.
-- `all`: keep every reporting group, but write a separate judgment and separate
-  headline set for each group. Never force a cross-group theme.
+The reader selects from registry metadata and raw filenames, plus the current
+project. Only Daily applies `daily_note.repos` when configured. Each project's
+config group overrides registry group; missing classification is `unassigned`.
+Exact-group reports exclude unassigned and other groups. `all` keeps groups
+separate, including unassigned; never rank or write a common judgment across them.
+Duplicate ownership or unreadable metadata stops the affected project's reads.
+Excluded/ambiguous projects are counted without exposing names, paths or refs.
+Only selected projects in `groups` may supply Git, conversation or editorial
+material; skills still handle those sources and audience partition themselves.
 
-Read `reporting_group` from the project-level
-`.tracework/config.yaml` `profile.reporting_group`, then from the matching
-`raw/projects.json` entry. When neither exists, classify the project as
-`unassigned`. Exclude unassigned projects from `work` and `personal` output and
-report the missing classification; keep them visibly separate only in `all`.
-Never guess that an unassigned project is safe for a scoped report.
+## Effective Facts, Failures and Output
 
-Explicit/configured scopes exclude unassigned projects. With no explicit or
-configured default, use the current project's assigned group, otherwise only
-the current project as an unassigned local lane in conversation. `all` remains
-a private combined view with separate judgments and evidence per group.
-Personal material must never displace or appear in a work report, even in its
-appendix. The headline budget applies per group, never across the vault.
+Each selected project carries a `view` from `tracework_state.py`: effective
+entries, period-end states, correction history and diagnostics. Corrections
+apply before period selection. Accepted risks, conflicts and unassociated old
+questions stay visible; raw totals and historical questions are not current state.
+A null view means no vault; continue from scoped conversation and Git evidence.
+An empty view is valid absence of records, not a read failure.
 
-## Effective Facts and State
+`status=partial` means coverage is incomplete: use surviving projects for a
+conversation draft, disclose failures, and make no whole-scope conclusion.
+`write_policy=explicit_save_only` permits saving only after an explicit request
+to save this incomplete draft; ordinary report generation is not that request.
+Existing-file protections still apply. `conversation_only` (no vault, local or
+blocked metadata) writes nothing. `status=blocked` reads no raw; explain the
+metadata problem. Never bypass errors with direct raw or Git fallback for the
+failed project. Complete scoped reports keep their output policy.
 
-For each authorized project, run `python <this-skill>/scripts/tracework_state.py
---vault <vault> --slug <slug> --start YYYY-MM-DD --end YYYY-MM-DD`; pass `--as-of`
-only for an explicit knowledge cutoff. Use its entries, states, correction
-history and diagnostics. It applies corrections before work-period selection
-and computes state through period end. Accepted risks stay separate; conflicts
-and unassociated old questions stay visible. Do not use raw totals or historical
-question lists as current state. Reports never rewrite raw or older reports.
-For a material gap, offer Capture Day for one project/date; read sessions only
-after that action is selected, through Capture's project-root filter.
+Reading reports never captures, registers projects, edits raw or advances scan
+watermarks. For a material gap, offer Capture Day for one project/date; use its
+project-root filter only after recovery is explicitly selected.
 
 ## Current Conversation Evidence
 

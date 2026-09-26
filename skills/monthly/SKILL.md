@@ -47,14 +47,10 @@ Outputs:
 ### 1. Resolve Month, Scope, and Output
 
 - Parse the requested month; default to the current month through today.
-- Run `python <this-skill>/scripts/tracework_raw.py resolve-scope --cwd <project-root> --purpose report`
-  using the shared reporting contract; add `--scope` only for an explicit user
-  choice. Use `scope_source=implicit-local` for conversation-only local fallback.
-- For an explicit/configured group, include only matching projects; exclude
-  unassigned projects and explain an empty result with a configuration hint.
-- `all` remains a private view with separate complete group sections.
-- Partition before ranking. Resolve project config before registry metadata,
-  as required by the shared reporting contract.
+- The preparation helper uses shared `read-report --report monthly` selection.
+  Pass `--cwd` for the current project; add `--scope` only for explicit user
+  choice. Use returned scope and groups, not a separately inferred project list.
+- Exact groups exclude unassigned projects; `all` keeps separate group sections.
 - Without a vault, or in implicit local mode, return the review in conversation
   and write no files. Do not require cold-start or a Daily archive. Use scoped
   conversation evidence and lightweight git coverage; git-only remains `limited`.
@@ -71,18 +67,23 @@ With a vault, collect matching raw entries whether or not Daily/Weekly exist:
 
 ```bash
 python <this-skill>/scripts/prepare_monthly_data.py \
-  --vault {vault} \
-  --month {YYYY-MM} --project-slug <authorized-slug> \
+  --cwd <project-root> --vault {vault} \
+  --month {YYYY-MM} \
   --signals-output {temporary-directory}/signals.json \
   --skeleton-output {temporary-directory}/skeleton.json
 ```
 
-The helper performs deterministic extraction, not selection or prose writing.
-Repeat `--project-slug` for each authorized in-scope project; pass `--as-of`
-only for an explicit knowledge cutoff. Its effective_views carry period-end
-states, correction history and diagnostics. Partition editorial context too. It does not grant permission to publish the
-unfiltered context. Raw-only input is sufficient. Missing derived indexes and
-Daily/Weekly files do not block the review.
+The helper selects projects before reading raw and performs deterministic
+extraction, not prose writing. Optional `--project-slug` only narrows scope;
+Daily's repo list does not affect Monthly. Pass `--as-of` only for an explicit
+knowledge cutoff and `--end YYYY-MM-DD` for a month-to-date review.
+Its effective_views carry period-end states, corrections and diagnostics.
+`report_context` carries selection status and write policy. Partial coverage
+returns JSON to the conversation without writing either output. Use `--save-draft`
+only for an explicit request to save that incomplete context; use `--overwrite`
+only for an explicit update of existing outputs. No-vault/local/blocked runs
+never write files, even with these flags. Apply the same policy to the review.
+Raw-only input is sufficient; Daily/Weekly files are optional.
 
 If a matching Daily archive exists, optionally pass `--input <archive.md>` for
 prior judgments and legacy coverage. Matching Weekly reports are also optional

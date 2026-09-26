@@ -8,6 +8,7 @@ can focus on writing high-quality change signals.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from contextlib import contextmanager
 import errno
 import tempfile
@@ -184,7 +185,10 @@ def load_yaml_config(path: Path) -> dict[str, Any]:
         return {}
     raw = path.read_text(encoding="utf-8")
     if yaml is not None:
-        data = yaml.safe_load(raw) or {}
+        try:
+            data = yaml.safe_load(raw) or {}
+        except yaml.YAMLError as exc:
+            raise ValueError(f"invalid YAML config: {path}") from exc
         if not isinstance(data, dict):
             raise ValueError(f"config is not a mapping: {path}")
         return data
@@ -210,6 +214,8 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
             value.startswith("'") and value.endswith("'")
         ):
             return value[1:-1]
+        if value.startswith(('"', "'", '{', '}', '&', '*', '!', '|', '>')):
+            raise ValueError('unsupported or malformed YAML scalar')
         lowered = value.lower()
         if lowered in {"true", "false"}:
             return lowered == "true"
@@ -222,46 +228,56 @@ def parse_simple_yaml(raw: str) -> dict[str, Any]:
                 parsed = json.loads(value)
                 if isinstance(parsed, list):
                     return parsed
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as exc:
+                raise ValueError('unsupported YAML list; use a block list or JSON array') from exc
+        if value.startswith('['):
+            raise ValueError('malformed YAML list')
         return value
 
+    previous_indent, can_nest = -1, True
     for line in raw.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
         indent = len(line) - len(line.lstrip(" "))
+        if '\t' in line[:len(line) - len(line.lstrip())] or (indent > previous_indent and not can_nest):
+            raise ValueError('invalid YAML indentation')
+        previous_indent, can_nest = indent, False
         while stack[-1][0] >= indent:
             stack.pop()
         owner = stack[-1][1]
 
         if stripped.startswith("-"):
             if not isinstance(owner, list):
-                continue
+                raise ValueError('unexpected YAML list item')
             item = stripped[1:].strip()
             if not item:
-                continue
+                raise ValueError('unsupported empty YAML list item')
             if ":" in item:
                 key, value = item.split(":", 1)
                 nested_item = {key.strip(): scalar(value.strip()) if value.strip() else {}}
                 owner.append(nested_item)
                 stack.append((indent, nested_item))
+                can_nest = True
             else:
                 owner.append(scalar(item))
             continue
 
         if ":" not in stripped or not isinstance(owner, dict):
-            continue
+            raise ValueError('expected YAML mapping entry')
         key, value = stripped.split(":", 1)
         key = key.strip()
+        if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_-]*', key) or key in owner:
+            raise ValueError('unsupported or duplicate YAML key')
         value = value.strip()
         if not value:
             nested: Any = [] if key in list_keys else {}
             owner[key] = nested
             stack.append((indent, nested))
+            can_nest = True
             continue
         if value in {"|", ">"}:
-            continue
+            raise ValueError('unsupported YAML block scalar')
         owner[key] = scalar(value)
     return result
 
@@ -318,7 +334,7 @@ def iso_week(value: str | None = None) -> str:
     return f"{year}-W{week:02d}"
 
 
-def resolve_scope(cwd: Path, requested: str | None, purpose: str) -> dict[str, Any]:
+def resolve_scope(cwd: Path, requested: str | None, purpose: str, vault_override: Path | None = None) -> dict[str, Any]:
     """Resolve a reporting lane without reading work records or transcripts."""
     if purpose not in {"report", "session"}:
         raise ValueError("purpose must be report or session")
@@ -327,6 +343,8 @@ def resolve_scope(cwd: Path, requested: str | None, purpose: str) -> dict[str, A
         return {"scope": requested.strip(), "scope_source": "explicit", "reason": "user_requested"}
 
     cfg, _ = resolve_config(cwd)
+    if vault_override is not None:
+        cfg['knowledge_vault'] = str(vault_override)
     profile = cfg.get("profile", {})
     if not isinstance(profile, dict):
         raise ValueError("profile must be a mapping")
@@ -411,6 +429,156 @@ def project_slug(cwd: Path, vault: Path | None = None) -> str:
             pass
 
     return slugify(cwd.resolve().name)
+
+
+def read_report(cwd: Path, report: str, start: str, end: str,
+                scope: str | None = None, project_slugs: list[str] | None = None,
+                vault_override: Path | None = None, as_of: str | None = None) -> dict[str, Any]:
+    """Select projects before reading raw; return partial evidence without writes."""
+    from tracework_state import read_view, timestamp, validate_slug
+
+    if report not in {'daily', 'weekly', 'monthly'}:
+        raise ValueError('invalid report kind')
+    for bound in (start, end):
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', bound):
+            raise ValueError('period dates must be YYYY-MM-DD')
+        dt.date.fromisoformat(bound)
+    if start > end:
+        raise ValueError('start is after end')
+    if as_of:
+        timestamp(as_of)
+    selected = None if project_slugs is None else {validate_slug(s) for s in project_slugs}
+    cwd = cwd.expanduser().resolve()
+    result: dict[str, Any] = {
+        'schema_version': 'tracework.report_view.v1',
+        'period': {'start': start, 'end': end, 'as_of': as_of},
+        'scope': None, 'scope_source': 'unresolved', 'reason': 'metadata_unavailable',
+        'status': 'complete', 'write_policy': 'conversation_only',
+        'groups': {}, 'failures': [], 'excluded': {}, 'diagnostics': [],
+    }
+
+    def exclude(reason: str, incomplete: bool = False) -> None:
+        result['excluded'][reason] = result['excluded'].get(reason, 0) + 1
+        if incomplete:
+            result['status'] = 'partial'
+
+    # Metadata errors never fall back to a broader scope or expose project names.
+    try:
+        cfg, _ = resolve_config(cwd)
+        value = vault_override or cfg.get('knowledge_vault')
+        vault = Path(value).expanduser().resolve() if value else None
+        config_path = find_project_config(cwd)
+        root = config_path.parent.parent if config_path else next(
+            (p for p in (cwd, *cwd.parents) if (p / '.git').exists()), cwd)
+        registry_path = vault / 'raw/projects.json' if vault else None
+        registry = json.loads(registry_path.read_text(encoding='utf-8')) if registry_path and registry_path.exists() else []
+        if not isinstance(registry, list) or any(not isinstance(p, dict) for p in registry):
+            raise ValueError('invalid project registry')
+        candidates = []
+        for row in registry:
+            slug = validate_slug(row.get('slug'))
+            path_value = row.get('path')
+            if path_value is not None:
+                validate_non_empty_string('project path', path_value)
+                if not Path(path_value).expanduser().is_absolute():
+                    raise ValueError('project path must be absolute')
+            candidates.append({**row, 'slug': slug,
+                               'path': str(Path(path_value).expanduser().resolve()) if path_value else None})
+
+        daily = cfg.get('daily_note', {}) if report == 'daily' else {}
+        if not isinstance(daily, dict):
+            raise ValueError('daily_note must be a mapping')
+        repos = daily.get('repos')
+        if repos is not None and (not isinstance(repos, list) or any(not isinstance(p, str) or not p.strip() for p in repos)):
+            raise ValueError('daily_note.repos must be a list of paths')
+        repo_paths = None if repos is None else {str((root / Path(p).expanduser()).resolve()) for p in repos}
+        # Explicit repo metadata can identify otherwise unregistered projects.
+        for path_value in sorted({str(root)} | (repo_paths or set())):
+            if any(p['path'] == path_value for p in candidates):
+                continue
+            candidates.append({'path': path_value, 'slug': None})
+
+        for project in candidates:
+            project['_slugs'] = {project['slug']} if project['slug'] else set()
+            try:
+                local = load_yaml_config(Path(project['path']) / '.tracework/config.yaml') if project['path'] else {}
+                profile = local.get('profile', {})
+                if not isinstance(profile, dict):
+                    raise ValueError('profile must be a mapping')
+                configured_slug = (cfg if project['path'] == str(root) else local).get('project_slug')
+                if configured_slug is not None:
+                    validate_slug(configured_slug)
+                    project['_slugs'].add(configured_slug)
+                if project['slug'] and configured_slug and project['slug'] != configured_slug:
+                    raise ValueError('project slug conflicts with registry')
+                project['slug'] = project['slug'] or configured_slug or slugify(Path(project['path']).name)
+                project['_slugs'].add(project['slug'])
+                group = profile.get('reporting_group', project.get('reporting_group', 'unassigned'))
+                validate_non_empty_string('reporting_group', group)
+                project['reporting_group'] = group.strip()
+                project['name'] = project.get('name') or profile.get('project_name') or project['slug']
+                if vault and local.get('knowledge_vault') and Path(local['knowledge_vault']).expanduser().resolve() != vault:
+                    project['error'] = 'different_vault'
+            except (ValueError, OSError, TypeError):
+                project['error'] = 'project_metadata_unavailable'
+
+        # Orphan filenames are metadata only. Their bodies are eligible only in all
+        # (or when a current-project config has already established ownership).
+        if vault:
+            known = set().union(*(p['_slugs'] for p in candidates))
+            for path in sorted((vault / 'raw/weeks').glob('*/*.json')):
+                if path.stem not in known:
+                    candidates.append({'slug': validate_slug(path.stem), 'path': None,
+                                       'name': path.stem, 'reporting_group': 'unassigned'})
+                    known.add(path.stem)
+        slug_counts = Counter(s for p in candidates for s in p.get('_slugs', {p['slug']}))
+        path_counts = Counter(p['path'] for p in candidates if p['path'] is not None)
+        for project in candidates:
+            if any(slug_counts[s] > 1 for s in project.get('_slugs', {project['slug']})) or path_counts[project['path']] > 1:
+                project['error'] = 'ambiguous_project'
+        result.update(resolve_scope(cwd, scope, 'report', vault))
+    except (ValueError, OSError, TypeError):
+        result.update(status='blocked', reason='metadata_unavailable')
+        result['diagnostics'].append('Cannot determine report scope or project ownership; no raw was read.')
+        return result
+
+    local_only = result['scope_source'] == 'implicit-local'
+    if vault and not local_only:
+        result['write_policy'] = 'normal'
+    for project in candidates:
+        slug, path_value = project['slug'], project['path']
+        if local_only and path_value != str(root):
+            continue
+        if selected is not None and slug not in selected:
+            continue
+        if repo_paths is not None and path_value not in repo_paths:
+            continue
+        if project.get('error'):
+            if (project['error'] == 'different_vault' and not local_only
+                    and result['scope'] != 'all'
+                    and project['reporting_group'] not in {'unassigned', result['scope']}):
+                exclude('outside_scope')
+                continue
+            exclude(project['error'], incomplete=True)
+            continue
+        group = project['reporting_group']
+        if not local_only and result['scope'] != 'all' and (group == 'unassigned' or group != result['scope']):
+            exclude('unassigned' if group == 'unassigned' else 'outside_scope')
+            continue
+        item = {key: project[key] for key in ('slug', 'name', 'path', 'reporting_group')}
+        try:
+            item['view'] = read_view(vault, slug, start, end, as_of) if vault else None
+        except (ValueError, OSError, TypeError, KeyError, AttributeError):
+            result['failures'].append({'slug': slug, 'reporting_group': group, 'reason': 'raw_read_failed'})
+            result['status'] = 'partial'
+            continue
+        result['groups'].setdefault('local' if local_only else group, []).append(item)
+    if selected is not None:
+        for _ in selected - {p['slug'] for p in candidates}:
+            exclude('unknown_project', incomplete=True)
+    if result['status'] == 'partial' and result['write_policy'] == 'normal':
+        result['write_policy'] = 'explicit_save_only'
+    return result
 
 
 def warn(message: str) -> None:
@@ -1022,6 +1190,14 @@ def command_resolve_scope(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_read_report(args: argparse.Namespace) -> int:
+    result = read_report(Path(args.cwd), args.report, args.start, args.end,
+                         args.scope, args.project_slug,
+                         Path(args.vault) if args.vault else None, args.as_of)
+    print_json(result)
+    return 2 if result['status'] == 'blocked' else 0
+
+
 def command_append_entry(args: argparse.Namespace) -> int:
     vault = Path(args.vault).expanduser().resolve() if args.vault else None
     result = append_entries(
@@ -1078,6 +1254,17 @@ def build_parser() -> argparse.ArgumentParser:
     scope_parser.add_argument("--scope", help="Explicit user-requested group or all")
     scope_parser.add_argument("--purpose", choices=["report", "session"], required=True)
     scope_parser.set_defaults(func=command_resolve_scope)
+
+    report_parser = subparsers.add_parser('read-report', help='Read scoped effective facts without writes')
+    report_parser.add_argument('--cwd', default=os.getcwd())
+    report_parser.add_argument('--report', choices=['daily', 'weekly', 'monthly'], required=True)
+    report_parser.add_argument('--start', required=True, help='YYYY-MM-DD')
+    report_parser.add_argument('--end', required=True, help='YYYY-MM-DD')
+    report_parser.add_argument('--scope', help='Explicit user-selected group or all')
+    report_parser.add_argument('--project-slug', action='append', help='Restrict to this project; repeat as needed')
+    report_parser.add_argument('--vault', help='Knowledge vault override')
+    report_parser.add_argument('--as-of', help='Explicit knowledge cutoff ISO timestamp')
+    report_parser.set_defaults(func=command_read_report)
 
     slug_parser = subparsers.add_parser("project-slug", help="Resolve project slug")
     slug_parser.add_argument("--cwd", default=os.getcwd(), help="Project working directory")
