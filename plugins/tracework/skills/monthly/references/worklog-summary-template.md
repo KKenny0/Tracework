@@ -1,7 +1,11 @@
 # Monthly Management Review Template
 
 Read `reporting-narrative-contract.md` first. Use this template per reporting
-group.
+group. Resolve skeleton indexes against signals.json; raw entries and period-end
+states support claims, while editorial_context supplies prior judgments only.
+For Daily-only input, state `limited` and describe what was previously reported
+without asserting verified completion. Empty evidence warrants an evidence-gap
+response rather than filling this template. Distinguish identical names by slug.
 
 ```markdown
 # YYYY-MM 月度回顾

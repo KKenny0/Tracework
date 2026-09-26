@@ -60,8 +60,8 @@ class EvidenceFlowTests(unittest.TestCase):
         run = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(run.returncode, 0, run.stderr)
         skeleton = json.loads((self.root / 'skeleton.json').read_text())
-        self.assertEqual(len(skeleton['raw_entries']), 1)
-        self.assertEqual(skeleton['statistics']['total_days'], 0)
+        self.assertEqual(skeleton['projects']['probe']['raw_entry_indexes'], [0])
+        self.assertEqual(skeleton['evidence_source'], 'raw')
 
     def test_concurrent_append_preserves_all_entries(self):
         result = self.append()
@@ -115,7 +115,7 @@ class EvidenceFlowTests(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         signals = json.loads((self.root / 'signals.json').read_text())
         self.assertEqual(signals['raw_entries'], [])
-        self.assertEqual(signals['entries'], [])
+        self.assertEqual(signals['editorial_context'], [])
         previous = (self.root / 'signals.json').read_bytes()
         failed = subprocess.run(command + ['--input', str(self.root / 'missing.md')],
                                 capture_output=True, text=True)
@@ -132,9 +132,11 @@ class EvidenceFlowTests(unittest.TestCase):
                 self.assertEqual(''.join(months['2026-08']), body)
                 archive = self.root / '2026-08.md'
                 archive.write_text(''.join(months['2026-08']))
-                parsed = monthly.parse_monthly_file(archive)
-                self.assertEqual(parsed['total_days'], 1)
-                self.assertIn('已记录，仍待验证', parsed['entries'][0]['raw_text'])
+                view = {'status': 'complete', 'period': {'start': '2026-08-01', 'end': '2026-08-31'}, 'groups': {'work': [{'slug': 'probe', 'reporting_group': 'work'}]}}
+                archive.write_text(body.replace('[Probe]', '[probe]'))
+                parsed = monthly.parse_monthly_file(archive, '2026-08', view)
+                self.assertEqual(len(parsed), 1)
+                self.assertIn('已记录，仍待验证', parsed[0]['text'])
 
 
 class ScopeAndReplayTests(unittest.TestCase):

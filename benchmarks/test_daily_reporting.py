@@ -119,26 +119,68 @@ class DailyReporting(unittest.TestCase):
             self.assertEqual(original.read_bytes(), b'user')
 
     def test_monthly_raw_old_new_none(self):
-        raw = [{'project_slug': 'demo', 'project_name': 'Demo', 'reporting_group': 'work',
-                'entry': {'timestamp': '2026-09-12T10:00:00+08:00', 'summary': 'Decision agreed', 'type': 'decision'}}]
+        view = {'status': 'complete', 'scope': 'work', 'scope_source': 'explicit',
+                'period': {'start': '2026-09-01', 'end': '2026-09-12'},
+                'groups': {'work': [{'slug': 'demo', 'name': 'Demo', 'reporting_group': 'work',
+                                    'view': {'project_slug': 'demo', 'states': [], 'entries': []}}]}}
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / '2026-09.md'
-            old = b'### 2026.09.12\n- [Demo]\n\t- '+ '进展：Legacy judgment\n'.encode()
-            new = writer.merge(b'', '2026-09-12', {'work': '#### 今日判断\n\nNo production acceptance yet.\n- [x] prose is not a task fact'})
+            old = b'### 2026.09.12\n- [demo]\n  - [x] Legacy judgment\n'
+            new = writer.merge(b'', '2026-09-12', {'work': 'No production acceptance yet.\n- [x] prose is not a task fact'})
             for content in [old, new, None]:
                 if content is not None:
                     path.write_bytes(content)
-                signals = monthly.parse_monthly_file(path if content is not None else None, '2026-09')
-                signals['raw_entries'] = raw
+                signals = monthly.build_signals(view, path if content else None, '2026-09')
                 result = monthly.build_review_skeleton(signals)
-                self.assertEqual(result['raw_entries'], raw)
-                if content == new:
-                    self.assertEqual(result['editorial_context'][0]['reporting_group'], 'work')
-                    self.assertEqual(result['editorial_context'][0]['evidence_boundary'], 'editorial_only')
-                    self.assertEqual(result['statistics']['total_completed_tasks'], 0)
-                    self.assertEqual(result['statistics']['total_report_items'], 0)
-                if content == old:
-                    self.assertGreater(result['statistics']['total_report_items'], 0)
+                self.assertEqual(result['evidence_source'], 'daily_only_limited' if content else 'empty')
+                self.assertEqual(result['raw_work_streams'], [])
+                self.assertNotIn('statistics', result)
+                if content:
+                    self.assertEqual(signals['editorial_context'][0]['evidence_boundary'], 'editorial_only')
+
+    def test_monthly_scope_period_and_raw_identity(self):
+        def project(slug, entries, states=None):
+            return {'slug': slug, 'name': 'Same name', 'reporting_group': 'work',
+                    'view': {'project_slug': slug, 'entries': entries, 'states': states or [],
+                             'correction_history': [{'correction': 'retained'}], 'diagnostics': ['conflict retained']}}
+        entry = {'timestamp': '2026-09-10T12:00:00+08:00', 'summary': 'Still unverified',
+                 'status': 'open', '_source_path': 'synthetic', '_source_index': 0}
+        view = {'status': 'complete', 'scope': 'work', 'scope_source': 'explicit',
+                'period': {'start': '2026-09-01', 'end': '2026-09-12'},
+                'groups': {'work': [project('one', [entry]), project('two', [entry]),
+                                    project('carried', [], [{'subject': 'risk:r', 'state': 'open'},
+                                                          {'subject': 'risk:a', 'state': 'accepted'}])]}}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / '2026-09.md'
+            content = writer.merge(b'', '2026-09-10', {'work': 'Completed! repeated judgment', 'personal': 'PRIVATE_MANAGED'})
+            content = writer.merge(content, '2026-09-11', {'work': 'Completed! repeated judgment'})
+            content = writer.merge(content, '2026-09-13', {'work': 'FUTURE'})
+            content += b'\n### 2026.09.10\n- [personal]\nPRIVATE_LEGACY\n- [Same name]\nAMBIGUOUS\n- [one]\nLegacy completed\n- [private] Private project\nTAIL_PRIVATE\n- [one]\nStill in scope\n### 2026.09.13 Future\nTAIL_FUTURE\n'
+            path.write_bytes(content)
+            signals = monthly.build_signals(view, path, '2026-09')
+            skeleton = monthly.build_review_skeleton(signals)
+            payload = json.dumps(signals)
+            for secret in ['PRIVATE_MANAGED', 'PRIVATE_LEGACY', 'AMBIGUOUS', 'FUTURE', 'TAIL_PRIVATE', 'TAIL_FUTURE']:
+                self.assertNotIn(secret, payload)
+            self.assertEqual(signals['excluded_editorial']['legacy_blocks'], 3)
+            self.assertEqual(len(signals['editorial_context']), 4)
+            self.assertEqual(skeleton['projects']['one']['raw_entry_indexes'], [0])
+            self.assertEqual(skeleton['projects']['two']['raw_entry_indexes'], [1])
+            self.assertEqual(skeleton['projects']['carried']['effective_view_indexes'], [2])
+            self.assertEqual(len(skeleton['current_risks']), 1)
+            self.assertEqual(len(skeleton['accepted_risks']), 1)
+            self.assertEqual(signals['raw_entries'][0]['entry']['status'], 'open')
+            self.assertNotIn('entries', signals['effective_views'][0])
+            self.assertEqual(signals['effective_views'][0]['diagnostics'], ['conflict retained'])
+            self.assertEqual([s['work_stream'] for s in skeleton['raw_work_streams']], ['one', 'two'])
+            for mode in ['light', 'engineering_review']:
+                other = monthly.build_review_skeleton(signals, mode)
+                other['summary_mode'] = skeleton['summary_mode']
+                self.assertEqual(other, skeleton)
+            narrowed = monthly.build_signals(view, path, '2026-09', allow_group_context=False)
+            self.assertEqual(len(narrowed['editorial_context']), 2)
+            view['status'] = 'partial'
+            self.assertEqual(len(monthly.build_signals(view, path, '2026-09')['editorial_context']), 2)
 
     def test_roadmap_can_recover_every_thread(self):
         nodes = [{'id': str(i), 'thread_id': f'thread:{i}', 'timestamp': f'2026-09-{i+1:02}',

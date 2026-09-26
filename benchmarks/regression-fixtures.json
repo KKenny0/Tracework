@@ -620,15 +620,15 @@
           "\t- 来源/证据边界：recorded；raw 2026-W28 entry"
         ]
       },
-      "expected_behavior": "prepare_monthly_data.py parses the report-led Daily Note shape, preserves the project label, exposes report_items in signals/skeleton, and carries risk/next/evidence-boundary fields forward.",
+      "expected_behavior": "Monthly preparation keeps raw facts once, indexes projects by slug, and excludes unverified display-name-only Daily ownership.",
       "assertions": [
         {
-          "name": "report_items_extracted",
-          "description": "The parser extracts progress, impact, risk, next step, and source/evidence boundary fields."
+          "name": "raw_facts_preserved",
+          "description": "Raw entries and explicit work streams remain available without inferring facts from Daily prose."
         },
         {
           "name": "monthly_skeleton_consumable",
-          "description": "The skeleton exposes report_items by project for monthly review writing."
+          "description": "The skeleton exposes raw indexes by project slug and no Daily-derived task statistics."
         }
       ]
     },

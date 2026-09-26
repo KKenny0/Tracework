@@ -77,7 +77,12 @@ The helper selects projects before reading raw and performs deterministic
 extraction, not prose writing. Optional `--project-slug` only narrows scope;
 Daily's repo list does not affect Monthly. Pass `--as-of` only for an explicit
 knowledge cutoff and `--end YYYY-MM-DD` for a month-to-date review.
-Its effective_views carry period-end states, corrections and diagnostics.
+Signals contain raw_entries once, effective_views without duplicated entry bodies,
+and scoped editorial_context. The skeleton indexes those arrays by project slug;
+raw_work_streams use explicit work_stream fields or the project slug fallback.
+The helper does not rank outcomes or infer phases from repetition. Summary mode
+changes presentation only. effective_views retain period-end states, corrections,
+conflicts and diagnostics, including carried states without current-month entries.
 `report_context` carries selection status and write policy. Partial coverage
 returns JSON to the conversation without writing either output. Use `--save-draft`
 only for an explicit request to save that incomplete context; use `--overwrite`
@@ -86,7 +91,13 @@ never write files, even with these flags. Apply the same policy to the review.
 Raw-only input is sufficient; Daily/Weekly files are optional.
 
 If a matching Daily archive exists, optionally pass `--input <archive.md>` for
-prior judgments and legacy coverage. Matching Weekly reports are also optional
+prior judgments and legacy coverage. Managed Daily blocks require matching group,
+valid body hash, and an in-period date. Project-narrowed or local runs exclude
+whole-group prose. Legacy blocks require an exact selected project slug label;
+display names, unknown labels and ambiguous ownership are excluded with counts
+only. Editorial text never supplies verified completion, risks or next actions.
+Daily-only evidence supports a limited review; compare it with raw when present
+and retain disagreements as editorial conflicts. Matching Weekly reports are also optional
 editorial context. Their absence does not lower a raw claim's evidence grade.
 
 For a normal scoped vault run, save only the in-scope context to the configured

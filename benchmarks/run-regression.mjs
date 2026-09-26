@@ -1201,8 +1201,6 @@ function runMonthlyPrepareDailyReportFixture(fixture) {
       '2026-07',
       '--summary-mode',
       'project_focused',
-      '--real-projects',
-      config.expected_project,
     ], {
       cwd: repoRoot,
       encoding: 'utf-8',
@@ -1213,36 +1211,12 @@ function runMonthlyPrepareDailyReportFixture(fixture) {
     }
     const signals = readJson(signalsPath);
     const skeleton = readJson(skeletonPath);
-    assert(signals.projects_detected.includes(config.expected_project), `${fixture.id}: project not detected`);
     assert(signals.raw_entries?.length === (config.raw_entries || []).length, `${fixture.id}: matching raw entries not loaded`);
-    const entry = signals.entries[0] || {};
-    assert(
-      entry.report_items?.some(item => item.field === '进展' && String(item.text).includes(config.expected_progress_text)),
-      `${fixture.id}: progress report field not parsed`,
-    );
-    assert(
-      entry.evidence_boundaries?.includes(config.expected_evidence_boundary),
-      `${fixture.id}: evidence boundary not parsed`,
-    );
-    const projectData = skeleton.by_project?.[config.expected_project] || {};
-    assert(projectData.report_items?.length >= config.expected_min_report_items, `${fixture.id}: skeleton report_items missing`);
-    assert(skeleton.raw_entries_by_project?.[config.expected_project]?.length === (config.raw_entries || []).length, `${fixture.id}: raw entries not exposed by project`);
-    assert(skeleton.reporting_groups?.[config.expected_reporting_group]?.includes(config.expected_project), `${fixture.id}: reporting group not preserved`);
-    assert(skeleton.raw_work_streams?.some(item => item.work_stream === config.expected_work_stream), `${fixture.id}: raw work stream not built`);
-    assert(
-      skeleton.risks?.some(item => String(item.signal).includes(config.expected_risk_text)),
-      `${fixture.id}: risk field not carried into skeleton`,
-    );
-    if (config.expected_absent_risk_text) {
-      assert(
-        !skeleton.risks?.some(item => String(item.signal).includes(config.expected_absent_risk_text)),
-        `${fixture.id}: no-risk placeholder leaked into skeleton risks`,
-      );
-    }
-    assert(
-      skeleton.next_actions?.some(item => String(item.signal).includes(config.expected_next_text)),
-      `${fixture.id}: next action field not carried into skeleton`,
-    );
+    assert(skeleton.projects?.[config.expected_slug]?.raw_entry_indexes.length === (config.raw_entries || []).length, `${fixture.id}: raw indexes missing`);
+    assert(skeleton.reporting_groups?.[config.expected_reporting_group]?.includes(config.expected_slug), `${fixture.id}: group missing`);
+    assert(skeleton.raw_work_streams?.some(item => item.work_stream === config.expected_work_stream), `${fixture.id}: explicit stream missing`);
+    assert(!('statistics' in skeleton) && !('by_project' in skeleton), `${fixture.id}: Daily semantic derivation survived`);
+    assert(signals.editorial_context.length === 0, `${fixture.id}: display-name-only legacy context admitted`);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }

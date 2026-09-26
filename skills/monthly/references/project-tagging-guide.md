@@ -1,68 +1,17 @@
-# 项目归类规则
+# Monthly project identity and editorial scope
 
-本文档说明如何从 Daily Note 中识别项目并正确归类条目。
+Use the shared report reader's selected project slug as identity. Display names
+are labels only; two projects with the same name remain separate. Include projects
+with carried period-end states even when they have no entries this month.
 
-## 项目识别
+Legacy Daily blocks enter editorial context only when `- [project-slug]` exactly
+matches a selected slug. Display-name labels and unknown ownership are excluded;
+report exclusion counts without exposing their names or text. Do not infer
+ownership from prose or from the frequency of a label.
 
-项目通过 `- [项目名]` 格式的标签标记。一级分类以此为依据。
+Managed Daily blocks carry group ownership and a body hash. Admit only matching
+scope and period dates with an intact hash. A project-narrowed or implicit local
+review excludes group-wide prose because it cannot establish project ownership.
 
-Skill **不预设项目列表**。项目由用户实际 Daily Note 中的标签决定。Agent 应从月度归档中扫描所有 `- [xxx]` 标签，自动汇总为本月项目清单。
-
-## 归类原则
-
-1. **以 `[项目名]` 标签为准**：这是最可靠的归类依据，不根据内容猜测项目归属
-2. **无标签条目不强行归类**：如果某条目没有明确的项目标签，在总结中标注为"未归类"
-3. **模块组合标签**：如 `{模块A}-{模块B}` 同时涉及两个模块，归入其父项目
-4. **上下文推断**：如果条目位于某个项目块内但省略了模块标签，继承该项目的归类
-5. **未知标签保留**：如果遇到新的项目标签，保留原始标签并在总结的数据说明区域提示
-
-## 项目标签的常见形态
-
-以下是 Daily Note 中常见的项目标签模式，供识别时参考：
-
-### 单日单项目
-
-```markdown
-### 2026.03.02
-- [项目A]
-	- {模块A}
-		- [x] 任务描述
-```
-
-### 单日多项目
-
-同一天可能有多个项目的工作记录：
-
-```markdown
-### 2026.03.05
-- [项目A]
-	- {模块A}
-		- [x] 任务A
-- [项目B]
-	- {模块B}
-		- [x] 任务B
-```
-
-### 项目标签变体
-
-不同月份同一项目可能使用不同的标签名称（如简写、别名）。Agent 在撰写总结时应识别这类变体，在总结中统一使用本月出现频率最高的标签名，并在数据说明区域注明。
-
-## 禁止的归类行为
-
-- 不得根据内容猜测项目归属（必须以标签为依据）
-- 不得将一个项目的条目归入另一个项目
-- 不得合并不同的项目为一个
-- 不得忽略没有项目标签的条目
-
-## Tracework 覆盖信号
-
-月度回顾可以统计 raw-entry 覆盖、git-only limited 区间、同步建议、难点信号、candidate rules 等条目作为证据覆盖与数据质量信号，但不要把这些触发词或章节名当作项目名。它们用于判断哪些上下文已有记录、哪些仍是低置信度推断，而不是用于项目归类。
-
-## 误检测处理
-
-Daily Note 中 Markdown 链接的方括号文本（如 `[文档标题](URL)`）可能被误识别为项目标签。Agent 应通过上下文判断：
-
-- 后面紧跟 `(` 的方括号是 Markdown 链接，不是项目标签
-- 项目标签 `- [xxx]` 后面不跟 `(`，且位于列表项开头
-
-如果误检测不可避免，在总结的数据说明区域加一行注释说明。
+Daily and optionally scoped Weekly prose preserve prior judgments, not facts.
+Repeated completion text cannot create an outcome or outrank effective raw state.
