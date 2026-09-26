@@ -8,7 +8,6 @@ install
   -> when you need multi-day memory: configure vault and project groups
   -> wrap up after key sessions
   -> write daily / weekly / monthly
-  -> drill down only when questioned or resuming
 ```
 
 1. Install `tracework@tracework`.
@@ -22,8 +21,6 @@ install
    high-frequency management closure.
 6. Optionally enable metadata-only session scanning and run
    `/tracework:capture day` once at day end to recover missed sessions.
-7. Use Query, Recall, or Roadmap only when work is questioned, resumed, or
-   reviewed over a long horizon.
 
 ## User Actions, Not a Command Table
 
@@ -31,7 +28,6 @@ install
 | :--- | :--- |
 | wrap up / 收工 | capture |
 | write daily / weekly / monthly | daily / weekly / monthly |
-| why did we choose this / continue last time | query / recall |
 
 See [Skills](./skills) for the full command surface.
 
@@ -57,9 +53,6 @@ Capture Day -> scoped session index + local transcripts -> raw entries
 Daily   <- raw entries + limited git fallback
 Weekly  <- raw entries + limited git fallback
 Monthly <- raw entries + Daily/Weekly editorial context
-Query   <- derived decisions + raw entries
-Recall  <- raw entries + artifact/decision navigation
-Roadmap <- decision evidence pack
 ```
 
 Raw entries remain semantic truth. Report-local evidence ids belong to the

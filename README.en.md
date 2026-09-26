@@ -18,14 +18,23 @@ The Chinese README is the canonical product reference; this page mirrors its
 current product scope and command surface in English.
 
 Say “wrap up” to keep the durable facts. Generate daily, weekly, and monthly
-reports when you need them. When the work is questioned later, replay why a
-choice was made.
+reports when you need them.
 
 Records stay in your own local vault. You can report before capturing: facts
 already visible in the current conversation can provide temporary evidence when
 the project, group, and work date are known. Reporting does not save those facts
 to long-term memory or read other conversations. Git-only reports remain
 `limited`, with explicit gaps instead of invented intent or outcomes.
+
+Tracework is a local reporting plugin for Codex and Claude Code with five skills:
+`capture` keeps key facts; `daily`, `weekly`, and `monthly` produce progress
+reports; `cold-start-interview` configures storage and project groups.
+
+Reports select projects before reading effective records, keeping work and
+personal groups separate. Monthly reviews use raw records and current risk
+states; Daily and Weekly reports provide prior judgments, so a complete Daily
+archive is optional. If some projects cannot be read, Tracework returns a
+conversation draft with coverage gaps and saves it only on explicit request.
 
 ## Try It First
 
@@ -65,14 +74,12 @@ claude plugin install tracework@tracework
 agent work
   -> wrap up and keep the durable facts
   -> write daily / weekly / monthly reports
-  -> when needed: why that choice / resume where you left off
 ```
 
 | Frequency | What you say | What it does |
 | :--- | :--- | :--- |
 | High | write daily / weekly / monthly | Management-facing progress closure |
 | High multiplier | wrap up / capture | Makes later reports better grounded |
-| Low | why did we choose this / continue last time | Drill-down when questioned or resuming |
 
 ## Reporting Scopes
 
@@ -112,9 +119,6 @@ stops before reading sessions when scope is unresolved.
 | `/tracework:monthly` | High | Raw-first phase outcomes, recurring risks, and next-month closure targets |
 | `/tracework:capture` | High multiplier | An adaptive lite/standard/deep session raw record |
 | `/tracework:capture day [date] [scope]` | Optional recovery | Incrementally recovered evidence from indexed sessions after scope partitioning |
-| `/tracework:query` | Low | A cited answer to why a path was chosen |
-| `/tracework:recall` | Low | Bounded context for resuming older work |
-| `/tracework:roadmap` | Low / advanced | A long-range decision-thread narrative |
 | `/tracework:cold-start-interview` | One-time upgrade | Vault, project identity, and reporting group |
 
 When explicitly asked for a `weekly PPT`, Tracework produces a standalone
@@ -126,7 +130,7 @@ Sources are reopened only for selected claims; the public appendix keeps a
 compact evidence map. The Markdown is readable on its own; a rendered `.pptx`
 is a separate visual translation.
 
-Decision replay is a trust mechanism, not a daily operation. A reader can drill
+Reports preserve their evidence chain. A reader can drill
 from a report claim to raw entries, rejected alternatives, risks, and direct
 evidence. When the record is insufficient, Tracework should expose the gap
 instead of inventing history.
@@ -142,7 +146,7 @@ concurrent changes return a draft while preserving the file. For a mistaken
 stored fact, ask Capture to correct the record and provide the original record
 and the correct fact. Corrections preserve original records and apply in the
 original work period; an explicit historical knowledge cutoff (as-of) uses only
-what was known then. Daily, Weekly, Monthly, Recall, Query, and Roadmap share
+what was known then. Daily, Weekly, and Monthly share
 that corrected view. Existing reports change only when you request a refresh;
 once corrections exist, do not downgrade to readers that ignore them.
 
@@ -151,10 +155,9 @@ once corrections exist, do not downgrade to readers that ignore them.
 - Configuration: `~/.tracework/config.yaml` or `{project}/.tracework/config.yaml`
 - Raw entries: `{vault}/raw/weeks/{week}/{slug}.json`
 - Artifact dossiers: `{vault}/raw/artifacts/{slug}.json`
-- Decision indexes: `{vault}/raw/decisions/{slug}.json`
 - Human-readable outputs: `{vault}/Daily Note.md` and `{vault}/Work Diary/`
 
-Raw entries remain semantic truth. Decision indexes are rebuildable query views.
+Raw entries remain semantic truth.
 Artifact dossiers preserve navigation and recorded boundaries without copying
 complete source documents.
 

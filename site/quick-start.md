@@ -89,20 +89,12 @@ Then run `/tracework:capture day [YYYY-MM-DD] [work|personal|all]`. The bundled
 hook indexes metadata only; Capture Day partitions reporting scope before it
 reads transcript content.
 
-## 5. Use Trust and Recovery When Needed
-
-- `/tracework:query why did we choose ...?`
-- `/tracework:recall` when resuming older work
-- `/tracework:roadmap` for a long-range decision review
-
-These are lower-frequency surfaces; they do not need to become daily habits.
-
-## 6. Update or Correct What You Saved
+## 5. Update or Correct What You Saved
 
 Daily updates preserve hand edits and return a draft if the file changed after
 it was read. To correct a stored fact, ask Capture to correct the record and
 identify the original record, correct fact, and reason. The original remains
-stored; all six readers use the corrected view in its original work period.
+stored; Daily, Weekly, and Monthly use the corrected view in its original work period.
 Existing reports change only when you request a refresh. Once corrections exist,
 keep a correction-aware plugin installed rather than downgrading to an older
 reader. See [Skills](./skills) for historical knowledge cutoffs and state handling.

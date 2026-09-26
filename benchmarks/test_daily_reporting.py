@@ -24,8 +24,6 @@ def module(name, relative):
 sys.path.insert(0, str(ROOT / 'references'))
 writer = module('daily_writer', 'skills/daily/scripts/update_daily_note.py')
 monthly = module('monthly_context', 'skills/monthly/scripts/prepare_monthly_data.py')
-sys.path.insert(0, str(ROOT / 'references'))
-replay = module('replay_context', 'references/decision_replay.py')
 
 
 def concurrent_write(path, expected, text, queue):
@@ -181,16 +179,6 @@ class DailyReporting(unittest.TestCase):
             self.assertEqual(len(narrowed['editorial_context']), 2)
             view['status'] = 'partial'
             self.assertEqual(len(monthly.build_signals(view, path, '2026-09')['editorial_context']), 2)
-
-    def test_roadmap_can_recover_every_thread(self):
-        nodes = [{'id': str(i), 'thread_id': f'thread:{i}', 'timestamp': f'2026-09-{i+1:02}',
-                  'source_entry_refs': [{'week': '2026-W37', 'entry_index': i}]} for i in range(25)]
-        index = {'nodes': nodes, 'edges': []}
-        first = replay.build_roadmap_pack(index)
-        self.assertEqual((first['thread_count'], len(first['threads'])), (25, 20))
-        full = replay.build_roadmap_pack(index, first['thread_count'])
-        self.assertEqual(sum(t['node_count'] for t in full['threads']), 25)
-        self.assertEqual({d['id'] for t in full['threads'] for d in t['decisions']}, {str(i) for i in range(25)})
 
     def test_instruction_paths(self):
         shared = ROOT / 'references/reporting-narrative-contract.md'

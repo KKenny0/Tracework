@@ -49,7 +49,7 @@ Avoid:
 
 ## Standard Capture
 
-Preserve the normal session memory that improves reports and future recall.
+Preserve the normal session memory that improves reports and later evidence checks.
 
 Expected fields:
 

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Tracework
   text: Turn agent work into evidence-backed progress reports.
-  tagline: Say “wrap up” to keep the durable facts. Generate daily, weekly, and monthly reports when you need them. When the work is questioned later, replay why a choice was made.
+  tagline: Say “wrap up” to keep the durable facts. Generate daily, weekly, and monthly reports when you need them.
   actions:
     - theme: brand
       text: Install
@@ -20,8 +20,8 @@ features:
     details: Explain what changed, why it matters, and the next gate. Markdown brief by default; a presentation outline only when you ask.
   - title: Wrap up to keep the why
     details: End key sessions by saving trade-offs, risks, and next steps so later reports stay grounded.
-  - title: Drill down when asked
-    details: Replay why a choice was made, or resume older work, only when you need it — not as a daily habit.
+  - title: Trace progress to evidence
+    details: Follow report claims to raw facts, trade-offs, and verification evidence. Missing evidence stays visible.
 ---
 
 <section class="tw-command-panel">
@@ -41,7 +41,7 @@ codex plugin add tracework@tracework
 install -> try: write weekly / write daily
         -> configure vault and project groups when you want multi-day memory
         -> wrap up after key sessions
-        -> query / recall only when questioned or resuming
+        -> generate daily / weekly / monthly reports when needed
 ```
 
 Projects can declare a reporting group such as `work` or `personal`. Reports
@@ -55,3 +55,13 @@ Tracework is not a meeting-notes tool, approval workflow, performance packaging
 layer, generic office suite, or employee-monitoring surface. Activity volume is
 coverage, not proof of outcomes. When the record is thin, Tracework exposes the
 gap instead of inventing history.
+
+Tracework is a local reporting plugin for Codex and Claude Code with five skills:
+`capture` keeps key facts; `daily`, `weekly`, and `monthly` produce progress
+reports; `cold-start-interview` configures storage and project groups.
+
+Reports select projects before reading effective records, keeping work and
+personal groups separate. Monthly reviews use raw records and current risk
+states; Daily and Weekly reports provide prior judgments, so a complete Daily
+archive is optional. If some projects cannot be read, Tracework returns a
+conversation draft with coverage gaps and saves it only on explicit request.

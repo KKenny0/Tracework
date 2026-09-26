@@ -103,7 +103,7 @@ public sample gate remain open.
 | Stronger than Before | Has a **weekly judgment**, state-change arcs, and next gates—not a commit dump |
 | `recorded` | Locally recorded decision/change; not independently proven in production |
 | `limited` | Thin or git-only signal; no invented motive or verified impact |
-| Query-ready | e.g. why brief skips logic diagrams; why unassigned cannot enter work |
+| Recorded rationale | e.g. why brief skips logic diagrams; why unassigned cannot enter work |
 | What was not invented | Missing host smoke and marketplace checks stay as gates, not completed claims |
 
 In 30 seconds: Before answers “what kept us busy”; After answers “what changed, how strong the evidence is, and what blocks next.”
@@ -113,10 +113,8 @@ In 30 seconds: Before answers “what kept us busy”; After answers “what cha
 | Surface | What it should show | Proof boundary |
 | :--- | :--- | :--- |
 | Capture | Routed depth, goal, decision, rejected path, risk, evidence, next step; vault receipt points at later reports | A capture record is not independent proof |
-| Query | Answerability, top decision, why, alternatives, source refs | Must refuse when the local record cannot support the answer |
 | Weekly | quick / brief / slides; brief by default | Heavy PPT rules only in slides; git-only stays limited |
 | Monthly | Raw-first phase narrative, recurring risks, next-month targets | Counts stay in coverage, not outcomes |
-| Roadmap | Decision thread, accumulating risks, recurring questions | Derived from raw entries and decision indexes |
 
 ## Example Claim Chain
 
@@ -142,7 +140,7 @@ Before adding another public case here, confirm:
   and invariant without treating diagram structure as effect evidence
 - routine maintenance stays in portfolio coverage without receiving a
   decorative architecture diagram
-- unsupported queries return an explicit evidence gap
+- unsupported report claims carry an explicit evidence gap
 
 ## Commands
 
@@ -152,6 +150,4 @@ Before adding another public case here, confirm:
 | `/tracework:daily` | Daily closure; works without a vault |
 | `/tracework:weekly` | Brief by default; quick review on “what did we do this week”; slides only for explicit PPT |
 | `/tracework:monthly` | Monthly review |
-| `/tracework:query` | Replay one decision with evidence |
-| `/tracework:recall` | Start with recent work context |
-| `/tracework:roadmap` | Review decision evolution |
+| `/tracework:cold-start-interview` | Configure vault, project identity, and reporting group |

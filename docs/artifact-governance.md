@@ -7,14 +7,14 @@ indexes and synthesized outputs, not full copies of every project document.
 
 ## Rule
 
-Preserve enough provenance for direct report/query value first:
+Preserve enough provenance for direct report value first:
 
 ```text
 /tracework:daily or /tracework:weekly -> limited when only git exists
-/tracework:capture -> stronger /tracework:query and report evidence
+/tracework:capture -> stronger report evidence
 ```
 
-Recall, roadmap, weekly, and monthly views can reuse the same evidence later.
+Daily, weekly, and monthly reports can reuse the same evidence later.
 They should not require users to maintain a parallel report-specific document
 catalog.
 
@@ -38,31 +38,6 @@ navigation or recorded context unless they carry direct evidence. The dossier
 must not duplicate the full artifact. Full content stays in the project repo
 unless the artifact is itself a vault wiki output.
 
-## Decision Index
-
-`{vault}/raw/decisions/{slug}.json` is a derived evidence pack for
-`/tracework:query`. It summarizes:
-
-- chosen path
-- rejected or deferred alternatives
-- rationale and constraints
-- impact, risks, and open questions
-- source raw entries and evidence gaps
-
-Weekly raw entries remain authoritative. If the index is missing or stale,
-Tracework should rebuild or fall back to raw entries. If the record still does
-not support the query, the answer should say so.
-
-## Roadmap Storage
-
-`/tracework:roadmap` produces a human-readable decision narrative. With a vault,
-the preferred location is:
-
-```text
-{vault}/Work Diary/Decision Roadmap*.md
-```
-
-Without a vault, the roadmap can be returned in the conversation.
-
-New information should be added as new raw entries or refreshed derived indexes,
-not by rewriting historical raw records.
+Weekly raw entries remain authoritative. If the record does not support a
+report claim, the report should expose that gap. Add new information as new raw
+entries rather than rewriting historical records.

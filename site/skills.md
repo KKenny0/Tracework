@@ -2,6 +2,18 @@
 
 Full command reference. For first use, prefer [Quick Start](./quick-start): try a weekly or daily report before configuring a vault.
 
+
+Tracework is a local reporting plugin for Codex and Claude Code with five skills:
+`capture` keeps key facts; `daily`, `weekly`, and `monthly` produce progress
+reports; `cold-start-interview` configures storage and project groups.
+
+Reports select projects before reading effective records, keeping work and
+personal groups separate. Monthly reviews use raw records and current risk
+states; Daily and Weekly reports provide prior judgments, so a complete Daily
+archive is optional. If some projects cannot be read, Tracework returns a
+conversation draft with coverage gaps and saves it only on explicit request.
+
+
 ## High-Frequency Reporting
 
 ### Daily
@@ -48,7 +60,7 @@ Reports can use current visible conversation facts when project, group and work
 date are known. They deduplicate these with raw/git and preserve conflicts.
 This does not capture facts into long-term memory or scan other conversations.
 
-Stored factual mistakes can be corrected through Capture. All six readers then
+Stored factual mistakes can be corrected through Capture. Daily, Weekly, and Monthly then
 use the corrected fact in its original work period; explicit as-of preserves
 the knowledge boundary. Accepted risks and unresolved conflicts stay visible.
 Existing reports change only when you request a refresh. Targeted recovery
@@ -65,21 +77,7 @@ facts. It does not pre-write separate Daily, Weekly, and Monthly prose.
 facts from opt-in local session manifests. Scope partition happens before
 transcript reading, and transcript bodies are never copied into the vault.
 
-## Lower-Frequency Trust and Recovery
-
-### Query
-
-Answers a specific why, alternative, revisit, or impact question from cited
-local evidence. Unsupported questions return an evidence gap.
-
-### Recall
-
-Restores bounded project context when older work is resumed.
-
-### Roadmap
-
-Builds a long-range narrative over decision threads. It is an advanced review,
-not a required reporting step.
+## Setup
 
 ### Cold Start
 

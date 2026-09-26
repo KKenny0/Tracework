@@ -19,12 +19,11 @@ description: >
 
 Capture session-end or checkpoint signals into Tracework raw entries. The goal
 is not a chronological diary. Preserve the lightest durable work signal that
-can improve Daily, Weekly, and Monthly first, then support evidence drill-down,
-decision replay, roadmap synthesis, and session-start recall when needed.
+can improve Daily, Weekly, and Monthly and support evidence drill-down when needed.
 
 Tracework is reporting-first: Daily, Weekly, and Monthly can still produce
 direct value without a fresh capture. Capture improves their evidence boundary
-and keeps lower-frequency Query, Recall, and Roadmap available when needed.
+and preserves the facts behind their conclusions.
 
 ## Progressive References
 

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Tracework Roadmap"
-  short_description: "Generate narrative decision roadmaps"
-  default_prompt: "Use $roadmap to synthesize decision threads, abandoned alternatives, open questions, and artifact dossier context from Tracework raw entries."

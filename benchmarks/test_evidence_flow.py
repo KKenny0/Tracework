@@ -22,7 +22,6 @@ def load(name, relative):
 
 
 raw = load('raw', 'scripts/tracework_raw.py')
-replay = load('replay', 'references/decision_replay.py')
 sessions = load('sessions', 'skills/capture/scripts/tracework_sessions.py')
 monthly = load('monthly', 'skills/monthly/scripts/prepare_monthly_data.py')
 split = load('split', 'skills/monthly/scripts/split_daily_note.py')
@@ -52,8 +51,10 @@ class EvidenceFlowTests(unittest.TestCase):
         stored = json.loads(Path(result['path']).read_text())[0]
         self.assertEqual(stored['timestamp'], '2026-08-31T12:00:00+08:00')
         self.assertIn('captured_at', stored)
-        self.assertEqual(len(monthly.load_monthly_raw_entries(self.root, '2026-08')), 1)
+        view = raw.read_report(self.root, 'monthly', '2026-08-01', '2026-08-31', scope='all', vault_override=self.root)
+        self.assertEqual(len(monthly.monthly_raw_entries(view)), 1)
         command = [sys.executable, '-B', str(ROOT / 'skills/monthly/scripts/prepare_monthly_data.py'),
+                   '--cwd', str(self.root), '--scope', 'all',
                    '--vault', str(self.root), '--month', '2026-08',
                    '--signals-output', str(self.root / 'signals.json'),
                    '--skeleton-output', str(self.root / 'skeleton.json')]
@@ -108,6 +109,7 @@ class EvidenceFlowTests(unittest.TestCase):
 
     def test_empty_month_and_explicit_missing_archive(self):
         command = [sys.executable, '-B', str(ROOT / 'skills/monthly/scripts/prepare_monthly_data.py'),
+                   '--cwd', str(self.root), '--scope', 'all',
                    '--vault', str(self.root), '--month', '2026-08',
                    '--signals-output', str(self.root / 'signals.json'),
                    '--skeleton-output', str(self.root / 'skeleton.json')]
@@ -139,9 +141,9 @@ class EvidenceFlowTests(unittest.TestCase):
                 self.assertIn('已记录，仍待验证', parsed[0]['text'])
 
 
-class ScopeAndReplayTests(unittest.TestCase):
+class ScopeTests(unittest.TestCase):
     def setUp(self):
-        temp = tempfile.TemporaryDirectory(prefix='tracework-scope-replay-')
+        temp = tempfile.TemporaryDirectory(prefix='tracework-scope-')
         self.addCleanup(temp.cleanup)
         self.root = Path(temp.name)
         self.project = self.root / 'project'
@@ -149,14 +151,6 @@ class ScopeAndReplayTests(unittest.TestCase):
         home = patch.object(Path, 'home', return_value=self.root)
         home.start()
         self.addCleanup(home.stop)
-        self.entry = {
-            'timestamp': '2026-09-08T10:00:00+08:00', 'type': 'decision',
-            'summary': 'Validation repair ownership stays in validation',
-            'context': 'Keep validation repair ownership separate from orchestration',
-            'motivation': 'Validation repair ownership avoids coupling',
-            'impact': 'Validation repair ownership is now isolated',
-            'source': 'session-recap',
-        }
 
     def write(self, relative, value):
         path = self.root / relative
@@ -168,11 +162,6 @@ class ScopeAndReplayTests(unittest.TestCase):
         path = parent / '.tracework/config.yaml'
         path.parent.mkdir(exist_ok=True)
         path.write_text(body)
-
-    def pack(self, entry, mode='why'):
-        self.write('raw/weeks/2026-W37/probe.json', [entry])
-        return replay.build_query_pack(replay.build_index(self.root, 'probe'),
-                                       'validation repair ownership', mode, 3)
 
     def test_scope_precedence_and_no_transcript_reads(self):
         for purpose, expected in [('report', 'local'), ('session', None)]:
@@ -209,67 +198,6 @@ class ScopeAndReplayTests(unittest.TestCase):
                 self.assertEqual(error.exception.code, 2)
                 collect.assert_not_called()
 
-    def test_boundary_survives_query_and_limits_strength(self):
-        for ref_type in ('conversation', 'repository_snapshot'):
-            entry = {**self.entry, 'source_refs': [{'type': ref_type, 'ref': 'session:probe'}],
-                     'reporting': {'evidence_boundary': 'verified', 'impact_boundary': 'expected'}}
-            pack = self.pack(entry)
-            self.assertTrue(pack['answerable'])
-            self.assertEqual(pack['evidence_strength'], 'weak')
-            self.assertEqual(pack['evidence_boundary'], 'recorded')
-            self.assertEqual(pack['top_nodes'][0]['impact_boundary'], 'expected')
-            self.assertTrue(pack['missing_evidence'])
-        legacy = {**self.entry, 'evidence_refs': ['test:validation-repair']}
-        self.assertEqual(self.pack(legacy)['evidence_boundary'], 'recorded')
-        verified = {**legacy, 'reporting': {'evidence_boundary': 'verified', 'impact_boundary': 'observed'}}
-        self.assertEqual(self.pack(verified)['evidence_strength'], 'strong')
-        self.assertEqual(self.pack(verified, 'impact')['evidence_strength'], 'strong')
-        verified['reporting']['impact_boundary'] = 'expected'
-        self.assertEqual(self.pack(verified, 'impact')['evidence_strength'], 'weak')
-        inferred = {**self.entry, 'type': 'feature', 'motivation': ''}
-        self.assertEqual(self.pack(inferred)['evidence_boundary'], 'limited')
-
-    def test_stable_ids_after_append_backfill_and_sort(self):
-        self.write('raw/weeks/2026-W37/probe.json', [self.entry])
-        before = replay.build_index(self.root, 'probe')['nodes'][0]
-        self.write('raw/weeks/2026-W37/probe.json', [self.entry,
-                   {**self.entry, 'timestamp': '2026-09-07T10:00:00+08:00'}])
-        self.write('raw/weeks/2026-W36/probe.json', [{**self.entry, 'timestamp': '2026-09-01T10:00:00+08:00'}])
-        after = next(n for n in replay.build_index(self.root, 'probe')['nodes'] if n['timestamp'] == self.entry['timestamp'])
-        self.assertEqual(before['id'], 'raw:probe:2026-W37:0')
-        self.assertEqual(after['id'], before['id'])
-        self.assertEqual(after['source_entry_refs'], before['source_entry_refs'])
-
-    def test_index_rebuild_content_artifact_missing_raw_and_atomic_failure(self):
-        raw_path = self.write('raw/weeks/2026-W37/probe.json', [self.entry])
-        index = replay.build_index(self.root, 'probe')
-        index['source']['builder_version'] = 2
-        target = replay.write_index(index, self.root, 'probe', None)
-        nodes, status = replay.read_or_rebuild_decision_context(self.root, 'probe', 10)
-        self.assertTrue(status['rebuilt'])
-        self.assertEqual(json.loads(target.read_text())['source']['builder_version'], 4)
-        self.write('raw/weeks/2026-W37/probe.json', [{**self.entry, 'summary': 'Changed in place'}])
-        self.assertEqual(replay.load_index(self.root, 'probe')['nodes'][0]['summary'], 'Changed in place')
-        fresh = replay.build_index(self.root, 'probe')
-        replay.write_index(fresh, self.root, 'probe', None)
-        self.write('raw/artifacts/probe.json', [{'id': 'artifact:probe', 'path': 'PLAN.md'}])
-        self.assertNotEqual(replay.load_index(self.root, 'probe')['source']['input_fingerprint'],
-                            fresh['source']['input_fingerprint'])
-        original = target.read_bytes()
-        with patch.object(Path, 'replace', side_effect=OSError('synthetic failure')):
-            with self.assertRaises(OSError):
-                replay.write_index(replay.build_index(self.root, 'probe'), self.root, 'probe', None)
-        self.assertEqual(target.read_bytes(), original)
-        self.assertFalse(list(target.parent.glob('*.tmp')))
-        raw_path.unlink()
-        pack = replay.build_query_pack(replay.load_index(self.root, 'probe'), 'validation repair ownership', 'why', 3)
-        self.assertFalse(pack['answerable'])
-        self.assertIn('preserved', ' '.join(pack['missing_evidence']))
-        self.assertTrue(replay.build_roadmap_pack(replay.load_index(self.root, 'probe'))['diagnostics'])
-        self.assertEqual(replay.read_or_rebuild_decision_context(self.root, 'probe', 10)[1]['reason'], 'missing_raw_sources')
-        with self.assertRaises(ValueError):
-            replay.write_index(replay.build_index(self.root, 'probe'), self.root, 'probe', None)
-        self.assertEqual(target.read_bytes(), original)
 
 
 if __name__ == '__main__':

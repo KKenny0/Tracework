@@ -98,7 +98,7 @@ description: Tracework 的输出形态、前后对比与证据边界。
 | 比 Before 强在哪 | 有**本周判断**、状态变化主线、下一道门，不是 commit 罗列 |
 | `recorded` | 本地记录了决策/改动，但还没有独立验证物证明“线上已生效” |
 | `limited` | 主要来自 git 覆盖或信号不足；不能编动机、不能当已验证成果 |
-| 可 query 的点 | 例如“为什么 brief 不要求逻辑图”“为什么 unassigned 不能进 work” |
+| 记录中的理由 | 例如“为什么 brief 不要求逻辑图”“为什么 unassigned 不能进 work” |
 | 没有编造的部分 | 宿主冒烟、市场页展示等未完成项保留在门槛里，而不是写成已完成 |
 
 30 秒对照：Before 回答“忙了什么”；After 回答“局面怎么变了、依据到哪、下一步卡什么”。
@@ -108,10 +108,8 @@ description: Tracework 的输出形态、前后对比与证据边界。
 | Surface | 应该展示什么 | 证据边界 |
 | :--- | :--- | :--- |
 | Capture | 路由深度、目标、决策、放弃路径、风险、证据、下一步；vault 回执含报告前瞻句 | 捕获记录本身不是独立 proof |
-| Query | 可回答性、核心决策、原因、替代方案、source refs | 记录不足时必须暴露缺口，不编答案 |
 | Weekly | quick / brief / slides 三档；默认 brief | PPT 重规则只在 slides；git-only 保持 limited |
 | Monthly | Raw-first 阶段叙事、反复风险、下月收口目标 | 计数留在 coverage，不升格成 outcome |
-| Roadmap | 决策线索、累积风险、反复开放问题 | 从 raw 与 decision index 派生 |
 
 ## 示例 Claim Chain
 
@@ -135,7 +133,7 @@ data。
 - 每个 outcome claim 都有独立证据，或者有明确可见的限制
 - 核心机制页覆盖主路径、关键分支或回退、输出与不变量，不把图的结构当作效果证据
 - 普通维护工作保留在 portfolio coverage 中，不生成装饰性架构图
-- 不受支持的 query 会返回明确的 evidence gap
+- 证据不足的报告主张会标明 evidence gap
 
 ## Commands
 
@@ -145,6 +143,4 @@ data。
 | `/tracework:daily` | 日报收口；可无 vault 试用 |
 | `/tracework:weekly` | 默认 brief；`这周做了啥` 为 quick；明确 PPT 为 slides |
 | `/tracework:monthly` | 月度 review |
-| `/tracework:query` | 用证据回放一个决策 |
-| `/tracework:recall` | 带着最近工作上下文开始 |
-| `/tracework:roadmap` | 回顾决策演变 |
+| `/tracework:cold-start-interview` | 配置 vault、项目身份与报告分组 |

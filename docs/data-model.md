@@ -4,15 +4,14 @@
 
 Tracework data is organized around one source-of-truth rule: raw records stay
 raw, and every synthesized view must be traceable back to them. Daily, Weekly,
-and Monthly are the primary human-facing views; query, recall, and roadmap are
-lower-frequency evidence and recovery views.
+and Monthly are the human-facing report views.
 
 ## Storage Surfaces
 
 | Surface | Owns | Examples |
 |---|---|---|
 | Project repo | Artifacts that evolve with implementation | `AGENTS.md`, design docs, prompt contracts, schema contracts |
-| Vault raw layer | Machine-readable memory and indexes | `raw/weeks/`, `raw/decisions/`, `raw/artifacts/`, `raw/months/` |
+| Vault raw layer | Machine-readable memory and indexes | `raw/weeks/`, `raw/artifacts/`, `raw/months/` |
 | Vault wiki layer | Human-readable synthesis | `Daily Note.md`, `Work Diary/Weekly/`, `Work Diary/Monthly/` |
 | Conversation fallback | Zero-config immediate value | Structured capture recap when no vault is configured |
 
@@ -27,8 +26,6 @@ and reports never consume it directly.
   raw/
     projects.json
     artifacts/
-      {slug}.json
-    decisions/
       {slug}.json
     weeks/
       YYYY-WNN/
@@ -48,18 +45,15 @@ and reports never consume it directly.
 ```text
 /tracework:capture     -> raw/weeks/{week}/{slug}.json
 /tracework:capture day -> scoped local session material -> raw/weeks/{week}/{slug}.json
-/tracework:query   <- raw/decisions/{slug}.json + raw/weeks/
-/tracework:recall  <- raw/weeks/ + raw/artifacts/ + raw/decisions/
 /tracework:daily   <- raw/weeks/ + fallback git coverage
 /tracework:weekly  <- raw/weeks/ + fallback git coverage
 /tracework:monthly <- matching raw entries + Daily/Weekly editorial context
-/tracework:roadmap <- raw entries + decision indexes
 ```
 
 Skills are independently triggered. The shared storage convention lets their
 outputs compound.
 
-Daily, weekly, monthly, and query can be useful before capture coverage is
+Daily, weekly, and monthly can be useful before capture coverage is
 complete. When only git evidence is available, report skills must label the
 result as `limited` and avoid inventing motivation, trade-offs, or verified
 impact. Capture improves the evidence boundary; it is not a prerequisite for
@@ -83,12 +77,28 @@ the draft. `all` submits separate actual group bodies, never an all block.
 An advisory lock serializes this writer; unrelated editors are covered by the
 optimistic file check, not a universal filesystem lock.
 
+## Scoped Report Reads
+
+`tracework_raw.py read-report` resolves scope, selects projects from metadata,
+and reads effective facts through `tracework_state.py`. Daily, Weekly and
+Monthly share this path; `daily_note.repos` restricts Daily only. Project config
+wins over registry classification; ambiguous ownership is excluded before raw
+reads. The result keeps groups separate and returns excluded counts without
+out-of-scope names or paths.
+
+A failed project read yields partial coverage and an explicit failure, while
+other selected projects remain usable. Missing records are a valid empty view.
+Partial reports default to conversation drafts; saving needs an explicit request,
+and existing-file protections still apply. No-vault, implicit-local and blocked
+metadata runs remain conversation-only. Git, visible conversation and historical
+report interpretation stay with each skill.
+
 ## Corrections and Period-End State
 
 The shared `references/tracework_state.py` reader resolves one authorized project
 at a time. It applies an explicit knowledge cutoff, replacement/withdrawal
 chains, and lifecycle state through the report end before selecting work-period
-facts. Daily, Weekly, Monthly, Recall, Query and Roadmap use the same view.
+facts. Daily, Weekly and Monthly use the same view.
 
 A correction contains operation, exact target week/index/timestamp, target hash
 and reason. The existing append writer checks the effective tail inside the
@@ -165,15 +175,6 @@ Dossiers are not independently authoritative. They preserve navigation plus
 recorded context; consumers still need raw entries or direct evidence before
 presenting a claim as verified. The vault does not store full artifact content
 or become a shadow document repository.
-
-## Decision Index
-
-`{vault}/raw/decisions/{slug}.json` is a derived index for query speed and
-answerability. Its schema string is `tracework.decision_replay.v1`.
-
-The index must point back to raw evidence through `source_entry_refs`. Those
-refs prove where a claim was recorded. They do not, by themselves, prove that
-the outcome was independently verified.
 
 ## Report-Local Traceability
 

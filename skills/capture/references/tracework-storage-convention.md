@@ -42,10 +42,9 @@ then store enough structured metadata for future skills to find and reuse it:
   such as `DESIGN.md`, `PLAN.md`, `AGENTS.md`, prompt contracts, schema
   contracts, migration notes, and architecture notes.
 - **Vault raw layer**: machine-readable memory and indexes, such as weekly raw
-  entries, artifact dossier entries, decision thread indexes, open question
-  indexes, and monthly signals.
+  entries, artifact dossier entries, and monthly signals.
 - **Vault wiki layer**: human-readable synthesis outputs, such as daily notes,
-  weekly outlines, monthly reviews, and decision roadmaps.
+  weekly outlines and monthly reviews.
 - **Conversation fallback**: zero-config immediate value when no durable storage
   exists, such as Markdown session recap output.
 
@@ -92,8 +91,6 @@ pattern:
     projects.json                 # Optional project registry
     artifacts/
       my-project.json             # Array of durable artifact dossier entries
-    decisions/
-      my-project.json             # Derived decision replay index for agent queries
     weeks/
       2026-W15/
         my-project.json           # Array of change entries
@@ -116,161 +113,6 @@ pattern:
 Weekly brief consumers should write their primary human-readable output to
 `{vault}/Work Diary/Weekly/{YYYY-WNN}.md` unless the user or config provides an
 explicit output path.
-
-## Decision Replay Index
-
-The decision replay index is a derived, machine-readable view over raw entries.
-It exists so coding agents can query why a project chose a path, what was
-rejected, and what evidence supports the answer without reading every weekly raw
-entry. Raw entries remain the source of truth; the index can be rebuilt from
-`{vault}/raw/weeks/` at any time.
-
-Store one project-scoped index at:
-
-```
-{vault}/raw/decisions/{slug}.json
-```
-
-The file shape is:
-
-```json
-{
-  "schema_version": "tracework.decision_replay.v1",
-  "project_slug": "my-project",
-  "generated_at": "2026-05-17T08:00:00+08:00",
-  "source": {
-    "kind": "roadmap",
-    "builder_version": 3,
-    "raw_entry_count": 12
-  },
-  "nodes": [
-    {
-      "id": "raw:my-project:2026-W20:0",
-      "timestamp": "2026-05-17T08:00:00+08:00",
-      "week": "2026-W20",
-      "confidence": "explicit",
-      "source_entry_refs": [
-        {
-          "week": "2026-W20",
-          "path": "/path/to/vault/raw/weeks/2026-W20/my-project.json",
-          "timestamp": "2026-05-17T08:00:00+08:00",
-          "entry_index": 0,
-          "entry_id": "raw:my-project:2026-W20:0"
-        }
-      ],
-      "summary": "Chose a derived decision replay index before adding autonomous capture",
-      "decision": "Use a derived decision replay index as the next product layer",
-      "why": "Raw entries already contain decision evidence, but agents need a compact queryable evidence pack.",
-      "chosen": "Derived index plus recall/query consumption",
-      "rejected": [
-        {
-          "option": "Build a dashboard, sentinel, or capture agent first",
-          "reason": "Expands platform surface before decision replay value is proven"
-        }
-      ],
-      "open_questions": [],
-      "impact": "Fresh coding agents can recover the reasoning behind past project direction.",
-      "decision_threads": ["decision-replay"],
-      "lifecycle_transition": {
-        "subject": "decision:decision-replay",
-        "from": "proposed",
-        "to": "chosen",
-        "reason": "The derived index gives agents a compact queryable evidence pack."
-      },
-      "topic_keys": ["decision-replay", "recall"],
-      "artifact_refs": [],
-      "evidence_refs": [],
-      "source_refs": [
-        {
-          "type": "doc",
-          "ref": "decision-replay-plan",
-          "path": "/path/to/project/PLAN.md"
-        }
-      ],
-      "thread_id": "thread:decision-replay",
-      "inference_notes": []
-    }
-  ],
-  "edges": [
-    {
-      "from": "raw:my-project:2026-W20:0",
-      "to": "raw:my-project:2026-W20:1",
-      "type": "same_thread",
-      "confidence": "heuristic",
-      "reason": "Both nodes share thread:decision-replay"
-    }
-  ]
-}
-```
-
-`raw/decisions/` is derived and rebuildable. `source.builder_version`
-identifies the deterministic builder semantics; consumers rebuild an older
-derived index when this version changes without migrating or rewriting weekly
-raw entries. Builder 3 uses `raw:{slug}:{week}:{entry_index}` (original zero-based
-JSON-array position), never the sorted node ordinal. Raw arrays are append-only:
-do not insert, reorder, or delete existing elements. Backfilling another week or
-appending a same-week entry leaves existing ids unchanged. Old reports retain
-`source_entry_refs`; no ambiguous mapping from old ordinal ids is fabricated.
-
-`source.input_fingerprint` is SHA-256 over canonical JSON of loaded raw and
-artifact inputs. Content edits and artifact changes invalidate the index even
-when entry count and timestamps are unchanged. Rebuilds use atomic replacement.
-Missing or truncated raw sources preserve the saved index and return unavailable
-claims with a diagnostic; they must not overwrite history with an empty index.
-
-### Decision Node Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `id` | string | Yes | Stable id within the project index |
-| `timestamp` | ISO 8601 | Yes | Timestamp of the source raw entry |
-| `week` | string | Yes | ISO week containing the source raw entry |
-| `confidence` | enum | Yes | `explicit` when the raw entry has decision fields; `inferred` when derived from summary/context |
-| `source_entry_refs` | object[] | Yes | Provenance pointers to the raw entries where the claim was recorded; not independent verification of the claim |
-| `summary` | string | Yes | Original raw entry summary |
-| `decision` | string | Yes | Decision phrased as a reusable agent-facing statement |
-| `why` | string | No | Motivation or reconstructed reason |
-| `chosen` | string | No | Chosen path when explicit or inferable |
-| `rejected` | object[] | No | Rejected options with reasons, derived from `abandoned_alternatives` |
-| `open_questions` | string[] | No | Unresolved questions from the source entry |
-| `impact` | string | No | Downstream effect of the decision |
-| `decision_threads` | string[] | No | Explicit raw-entry decision threads used before artifact hints or keyword fallback |
-| `lifecycle_transition` | object | No | Raw-entry lifecycle transition when this node carries a state change |
-| `topic_keys` | string[] | No | Stable retrieval terms for deterministic query helpers |
-| `artifact_refs` | string[] | No | Artifact paths or ids touched by the decision |
-| `direct_artifact_refs` | string[] | No | Artifact references explicitly recorded under `artifact_context.source_of_truth`; unlike general `artifact_refs`, these can support verification |
-| `evidence_refs` | string[] | No | Direct commit, eval, issue, document, or source references supporting the claim |
-| `source_refs` | object[] | No | Typed references; conversation and repository_snapshot are provenance, not outcome verification |
-| `evidence_boundary` | enum | Yes | `verified`, `recorded`, or `limited`; copied and constrained from raw reporting |
-| `impact_boundary` | enum | Yes | `observed`, `expected`, or `unknown`; copied from raw reporting |
-| `evidence_gap` | string | No | Remaining verification gap from raw reporting |
-| `thread_id` | string | No | Decision thread grouping key |
-| `inference_notes` | string[] | No | Notes explaining any inferred decision content |
-
-`source_entry_refs` are mandatory because agents should ground answers in raw
-records. They establish provenance, not independent verification. Consumers may
-summarize the decision node, but they must not present derived content as
-stronger than the node's `confidence`, `inference_notes`, and direct evidence
-allow. Explicit legacy entries default to `recorded`; inferred entries to
-`limited`. `strong` additionally requires a valid `verified` boundary and
-supporting references; impact queries require `observed`. Conversation refs and
-repository snapshots alone cannot establish verification. Other references are
-support to inspect, not proof that the reader reran validation. General
-`artifact_refs` remain navigation hints unless explicitly marked source-of-truth.
-
-### Decision Edges
-
-Edges are optional navigation hints, not facts by themselves. Supported v1 edge
-types:
-
-- `same_thread` — nodes share a decision thread or stable topic key
-- `supersedes` — a later decision explicitly replaces an earlier one
-- `related` — nodes share a meaningful topic or retrieval term
-- `touches_artifact` — nodes affect the same durable artifact
-
-Each edge must include `confidence` (`explicit` or `heuristic`) and `reason`.
-Consumers should use edges to expand context after retrieval, not as standalone
-decision evidence.
 
 ## Artifact Index
 
@@ -348,8 +190,8 @@ Each `{vault}/raw/artifacts/{slug}.json` file contains a JSON array of artifacts
 | `source` | string | Yes | Producing skill or workflow |
 | `status` | enum | Yes | `active` \| `draft` \| `superseded` \| `obsolete` \| `missing` |
 | `repo_relative_path` | string | No | Path relative to the project repo when the artifact lives inside the repo |
-| `topics` | string[] | No | Stable recall tags, not prose summaries |
-| `decision_threads` | string[] | No | Stable narrative threads used by roadmap and recall |
+| `topics` | string[] | No | Stable evidence tags, not prose summaries |
+| `decision_threads` | string[] | No | Stable decision threads used to connect report evidence |
 | `open_questions` | string[] | No | Questions preserved by the artifact |
 | `risk_refs` | string[] | No | Risk ids or short risk labels |
 | `evidence_refs` | string[] | No | Commit SHAs, eval ids, issue ids, or doc refs |
@@ -384,7 +226,7 @@ Use dossier fields this way:
 - `last_seen` records the last source-file observation when known. A missing or
   stale source file does not invalidate the dossier summary, but it lowers what
   consumers may claim from it.
-- `source_availability` and `deletion_behavior` tell recall/query/roadmap
+- `source_availability` and `deletion_behavior` tell report consumers
   whether the source can still be opened and whether the dossier remains useful
   if it cannot.
 
@@ -542,7 +384,7 @@ Consumers must tolerate these fields being absent. Producers should add them whe
 | `impact` | string | Observed user, system, or engineering effect; prospective effects must be labeled as expected or intended |
 | `status` | enum | Claim boundary: `done` completed the described scope; `ongoing` is progress; `risk` is unresolved exposure; `decision` records a choice, not implementation |
 | `evidence_refs` | string[] | Direct commit, eval, issue, or document references supporting the entry; their presence alone does not prove `impact` |
-| `decision_threads` | string[] | Stable thread keys for decision replay. These override artifact hints and keyword fallback when deriving `thread_id` |
+| `decision_threads` | string[] | Stable thread keys connecting related decisions across report periods |
 | `lifecycle_transition` | object | Explicit state change for an open question, risk, decision, or artifact |
 | `source_refs` | object[] | Typed source references with `type` and `ref`, plus optional `path`, `url`, `note`, or `timestamp`; `repository_snapshot` uses a full Git object id and absolute repository root |
 | `motivation` | string | Trigger reason and goal for the change — what problem was being solved |
@@ -674,7 +516,7 @@ Recommended producer behavior:
 - Add `evidence_refs` for commit SHAs, issue IDs, eval IDs, or doc paths that are already known. Do not perform extra repository analysis only to populate this field.
 - Add `decision_threads` when the entry belongs to a durable decision topic.
   Use stable slug-like terms such as `validation-repair-ownership`; these are
-  preferred over artifact hints and keywords for decision replay `thread_id`.
+  used to connect related decisions across report periods.
 - Add `lifecycle_transition` when the entry explicitly changes the state of an
   open question, risk, decision, or artifact. Keep it factual and tied to the
   current raw entry.
@@ -690,7 +532,7 @@ Recommended producer behavior:
 - Add `project_area` or `work_stream` when the natural module or narrative grouping is obvious. Leave them absent rather than guessing.
 - Add `motivation` when the trigger for the change is clear — the problem being solved, the constraint that forced the change, or the goal being pursued. This is the "why now" behind the change.
 - Add `exploration_paths` when the session involved trying multiple approaches. Each entry should describe the approach and its outcome (e.g. "lazy loading → marginal gain on mobile first-screen").
-- Add `abandoned_alternatives` when approaches were explicitly considered and rejected. Include the rejection reason — this is valuable for future roadmap decisions.
+- Add `abandoned_alternatives` when approaches were explicitly considered and rejected. Include the rejection reason — this is valuable for later reviews of decisions.
 - Add `open_questions` when the session ends with unresolved decisions or unanswered questions. These serve as entry points for the next session.
 - Add `sync_suggestions` when the entry mentions a decision, prompt/schema
   contract, orchestration rule, or intent artifact that may require follow-up in
@@ -868,9 +710,6 @@ Downstream tools read these files to get high-quality development context:
 - **weekly** — reads change entries as the primary semantic source for weekly report generation. Git logs are only fallback and coverage evidence when raw entries are missing or incomplete.
 - **daily** — creates scoped daily management-closure reports from raw entries and uses git only as limited fallback coverage
 - **monthly** — uses matching raw entries as semantic truth and Daily/Weekly reports as prior human judgments
-- **recall** — reads recent raw entries first and uses artifact dossiers as optional navigation plus recorded context
-- **roadmap** — derives decision threads, accumulating risks, and
-  recurring open questions from raw entries
 - Any future reporting or review tool that needs structured change history
 
 ## Weekly Report Consumption

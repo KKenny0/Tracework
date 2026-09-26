@@ -15,7 +15,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'references'))
 import tracework_state as state
 import tracework_raw as raw
-import decision_replay as replay
 
 
 def load(name, path):
@@ -26,7 +25,6 @@ def load(name, path):
 
 
 monthly = load('monthly_state', 'skills/monthly/scripts/prepare_monthly_data.py')
-recall = load('recall_state', 'skills/recall/scripts/recall_context.py')
 sessions = load('sessions_state', 'skills/capture/scripts/tracework_sessions.py')
 
 
@@ -149,14 +147,6 @@ class EffectiveState(unittest.TestCase):
         data.append(fact('accepted branch', '2026-09-02T10:00:00+08:00', lifecycle_transition={'subject':target,'from':'open','to':'accepted'}))
         next_week.write_text(json.dumps(data))
         self.assertEqual(next(x for x in self.view()['states'] if x['subject']==target)['state'], 'conflict')
-        conflicted = replay.load_index(self.vault, 'demo')
-        risk_node = next(node for node in conflicted['nodes'] if node['id'] == 'raw:demo:2026-W35:0')
-        self.assertEqual(risk_node['evidence_boundary'], 'limited')
-        data[0]['lifecycle_transition']['to'] = 'accepted'; next_week.write_text(json.dumps(data[:3]))
-        context = recall.build_context(self.root, str(self.vault), 'demo', 12)
-        self.assertEqual(len(context['accepted_risks']), 1)
-        self.assertEqual(context['risks'], [])
-        self.assertEqual(len(context['open_questions']), 1)
 
     def test_correction_preserves_risk_but_not_changed_question_binding(self):
         original = fact('risk wording', type='risk', open_questions=['first', 'second'])
@@ -173,23 +163,15 @@ class EffectiveState(unittest.TestCase):
         self.assertEqual(states['open_question:raw:demo:2026-W35:1:0'], 'open')
         self.assertTrue(any('missing exact subject' in d for d in view['diagnostics']))
 
-    def test_six_consumers_agree_on_effective_fact(self):
+    def test_report_consumers_agree_on_effective_fact(self):
         self.write([self.original, correction(self.original, 0)])
         expected = ['corrected, ongoing']
-        for name in ('daily', 'weekly'):
-            result = subprocess.check_output([sys.executable, '-B', str(ROOT/f'skills/{name}/scripts/tracework_state.py'),
-                                              '--vault',str(self.vault),'--slug','demo','--start','2026-08-01','--end','2026-08-31'])
-            self.assertEqual([e['summary'] for e in json.loads(result)['entries']], expected)
-        self.assertEqual([x['entry']['summary'] for x in monthly.load_monthly_raw_entries(self.vault,'2026-08',['demo'])], expected)
-        context = recall.build_context(self.root, str(self.vault),'demo',12)
-        self.assertEqual([e['summary'] for e in context['recent_entries']], expected)
-        index = replay.load_index(self.vault,'demo')
-        query = replay.build_query_pack(index,'corrected','why',5)
-        self.assertEqual([n['decision'] for n in query['top_nodes']], expected)
-        roadmap = replay.build_roadmap_pack(index)
-        self.assertEqual([n['decision'] for t in roadmap['threads'] for n in t['decisions']], expected)
-        old = replay.load_index(self.vault,'demo',as_of='2026-08-31T23:59:59+08:00')
-        self.assertEqual(old['nodes'][0]['summary'], 'original delivered')
+        for name in ('daily', 'weekly', 'monthly'):
+            result = subprocess.check_output([sys.executable, '-B', str(ROOT/f'skills/{name}/scripts/tracework_raw.py'),
+                'read-report', '--cwd',str(self.root), '--report',name,'--scope','all',
+                '--vault',str(self.vault),'--project-slug','demo','--start','2026-08-01','--end','2026-08-31'])
+            report_view = json.loads(result)
+            self.assertEqual([x['entry']['summary'] for x in monthly.monthly_raw_entries(report_view)], expected)
 
     def test_same_vault_symlink_cannot_cross_project(self):
         other = self.path.with_name('other.json')

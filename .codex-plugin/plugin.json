@@ -1,7 +1,7 @@
 {
   "name": "tracework",
-  "version": "0.12.0",
-  "description": "Turn agent work into evidence-backed progress reports — daily, weekly, and monthly, with local decision replay when work is questioned later.",
+  "version": "0.13.0",
+  "description": "Turn agent work into evidence-backed progress reports — daily, weekly, and monthly, with opt-in session recovery.",
   "author": {
     "name": "Kennywu",
     "email": "jdlow@live.cn"
@@ -15,14 +15,13 @@
     "weekly report",
     "agent sessions",
     "work briefs",
-    "decision replay",
     "local-first"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Tracework",
     "shortDescription": "Turn agent work into evidence-backed progress reports",
-    "longDescription": "Close agent work into evidence-backed daily, weekly, and monthly progress reports. Capture key facts when you wrap up a session, keep work and personal projects partitioned, and replay decisions only when the work is questioned or resumed.",
+    "longDescription": "Five skills for evidence-backed daily, weekly, and monthly reports in Codex and Claude Code. Capture key facts locally, keep work and personal projects separate, and build monthly reviews directly from effective records. Incomplete coverage returns an explicit draft.",
     "developerName": "Kennywu",
     "category": "Productivity",
     "capabilities": [

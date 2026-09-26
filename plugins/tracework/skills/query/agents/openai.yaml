@@ -1,4 +1,0 @@
-interface:
-  display_name: "Tracework Query"
-  short_description: "Query cited decision evidence"
-  default_prompt: "Use $query to answer targeted questions about why a project chose a path, what was rejected, and what evidence or artifact dossier context supports the decision."

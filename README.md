@@ -15,11 +15,18 @@
 </p>
 
 日常说“收工”留下关键事实；需要时生成日报、周报、月报。
-被追问时，再回看当时为什么这么选。
 
 记录留在你自己的本地 vault。还没“收工”也能直接写报告：项目、分组和工作日期
 明确的当前对话事实可以临时作为依据，不会自动存入长期记忆或读取其他对话。只有
 git 记录时，报告生成 `limited` 版本，明确缺口，不编造动机或成果。
+
+Tracework 是面向 Codex 和 Claude Code 的本地报告插件，提供五个 skills：
+`capture` 留下关键事实，`daily`、`weekly`、`monthly` 生成进展报告，
+`cold-start-interview` 配置记录位置与项目分组。
+
+日报、周报和月报先确定项目范围，再读取有效记录；公司与个人项目分开处理。
+月报直接依据原始记录和当前风险状态，日报、周报只作为历史判断参考，无需先写齐日报。
+部分项目读取失败时，返回注明缺口的对话草稿；只有明确要求保存草稿时才写入文件。
 
 ## 最短试用
 
@@ -58,14 +65,12 @@ claude plugin install tracework@tracework
 Agent 工作
   -> 收工，留下关键事实
   -> 写日报 / 写周报 / 写月报
-  -> 需要时：为什么当时这么选 / 接着上次
 ```
 
 | 频次 | 你怎么说 | 作用 |
 | :--- | :--- | :--- |
 | 高频 | 写日报 / 写周报 / 写月报 | 给人看的进展收口 |
 | 高频增强 | 收工 | 让后续报告更有依据 |
-| 低频 | 为什么当时这么选 / 接着上次 | 被追问或续作时下钻 |
 
 ## 公司与个人项目分区
 
@@ -100,9 +105,6 @@ headline 数量。Brief 正文只保留会改变管理判断的信息，完整�
 | `/tracework:monthly` | 高频 | Raw-first 的阶段成果、反复风险和下月收口目标 |
 | `/tracework:capture` | 高频增强 | 动态选择 lite/standard/deep 的 session raw record |
 | `/tracework:capture day [date] [scope]` | 可选补录 | 按分组扫描已索引 session，增量补回当天证据 |
-| `/tracework:query` | 低频 | 用引用回答当时为什么这么选 |
-| `/tracework:recall` | 低频 | 继续旧工作时恢复有边界的上下文 |
-| `/tracework:roadmap` | 低频进阶 | 长周期决策线程叙事 |
 | `/tracework:cold-start-interview` | 一次性增强 | Vault、项目身份和报告分组 |
 
 明确请求 `weekly PPT` 时，Tracework 会生成只保留必要页面的 PPT-ready Markdown
@@ -111,8 +113,7 @@ Deck；异常长度触发压缩检查，而不是数字上限。没有显式受�
 系统只为入选结果回溯 source，完整 source packet 留在内部，公开附录只保留紧凑证据
 映射。Markdown 本身可以独立阅读，PPT 只是它的视觉转译。
 
-Decision replay 是可信机制，而不是需要每天使用的操作。读者可以从报告主张向下追到
-raw entry、被拒方案、风险和直接证据。记录不足时，Tracework 应该明确暴露缺口，而
+报告保留证据链。读者可以从报告主张向下追到 raw entry、被拒方案、风险和直接证据。记录不足时，Tracework 应该明确暴露缺口，而
 不是编造历史。
 
 Tracework 不是会议纪要、审批流、绩效包装、员工监控或泛办公室套件。活动数、提交数
@@ -123,7 +124,7 @@ Tracework 不是会议纪要、审批流、绩效包装、员工监控或泛办�
 日报按日期和分组保护已有内容；手改或并发冲突时保留原文，返回草稿。
 如果存下来的事实有误，可对 Capture 说“更正这条记录”，提供原记录和正确事实。
 更正保留原始记录，并在原工作期间生效；明确指定历史知悉时点（as-of）时，只采用
-当时已知的材料。日报、周报、月报、Recall、Query、Roadmap 使用同一更正结果。
+当时已知的材料。日报、周报、月报使用同一更正结果。
 已有报告只在请求刷新时更新；写入更正后，不要降级到忽略更正的旧版读取器。
 
 ## Storage
@@ -131,11 +132,9 @@ Tracework 不是会议纪要、审批流、绩效包装、员工监控或泛办�
 - 配置：`~/.tracework/config.yaml` 或 `{project}/.tracework/config.yaml`
 - Raw entries：`{vault}/raw/weeks/{week}/{slug}.json`
 - Artifact dossiers：`{vault}/raw/artifacts/{slug}.json`
-- Decision indexes：`{vault}/raw/decisions/{slug}.json`
 - 可读输出：`{vault}/Daily Note.md` 和 `{vault}/Work Diary/`
 
-Raw entries 是语义真相；decision index 是可重建的查询视图；Artifact dossier 保存导航
-和已记录边界，不复制完整源文档。
+Raw entries 是语义真相；Artifact dossier 保存导航和已记录边界，不复制完整源文档。
 
 可选的 Capture Day 默认关闭。设置 `session_scan.enabled: true` 后，插件 Hook 只在
 `~/.tracework/session-index/` 保存 session 指针和分组所需元数据；只有显式运行
