@@ -4,16 +4,12 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export const OFFICIAL_SKILLS = [
-  'capture',
-  'recall',
-  'query',
-  'daily',
-  'weekly',
-  'monthly',
-  'roadmap',
-  'cold-start-interview',
-];
+export const OFFICIAL_SKILLS: string[] = JSON.parse(fs.readFileSync(new URL('../skill-catalog.json', import.meta.url), 'utf8'));
+if (!Array.isArray(OFFICIAL_SKILLS) || !OFFICIAL_SKILLS.length
+  || OFFICIAL_SKILLS.some(skill => typeof skill !== 'string' || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(skill))
+  || new Set(OFFICIAL_SKILLS).size !== OFFICIAL_SKILLS.length) {
+  throw new Error('skill-catalog.json must contain nonempty, unique, safe skill names');
+}
 
 const OFFICIAL_SKILL_SET = new Set(OFFICIAL_SKILLS);
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import { skillCopies } from './skill-copies.mjs';
+import { skillCopies, officialSkills, validateSkillSources } from './skill-copies.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,16 +22,7 @@ const bundledCodexSkillsDir = path.join(codexPluginBundleDir, 'skills');
 const bundledCodexAssetsDir = path.join(codexPluginBundleDir, 'assets');
 const bundledCodexHooksDir = path.join(codexPluginBundleDir, 'hooks');
 
-const officialSkills = [
-  'capture',
-  'recall',
-  'query',
-  'daily',
-  'weekly',
-  'monthly',
-  'roadmap',
-  'cold-start-interview',
-];
+
 
 const officialAssets = [
   'logo.png',
@@ -67,6 +58,16 @@ function copyFile(src, dest) {
   fs.copyFileSync(src, dest);
 }
 
+validateSkillSources(repoRoot);
+for (const source of [
+  ...officialAssets.map(asset => path.join(sourceAssetsDir, asset)),
+  path.join(sourceCodexPluginDir, 'plugin.json'),
+  path.join(sourceClaudePluginDir, 'plugin.json'),
+  path.join(sourceHooksDir, 'hooks.json'),
+]) {
+  if (!fs.statSync(source).isFile()) throw new Error(`Copy source is not a file: ${source}`);
+}
+
 for (const [source, target] of skillCopies) {
   copyFile(path.join(repoRoot, source), path.join(repoRoot, target));
 }
@@ -76,7 +77,6 @@ fs.mkdirSync(bundledSkillsDir, { recursive: true });
 
 for (const skill of officialSkills) {
   const skillPath = path.join(sourceSkillsDir, skill);
-  if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
   copyDir(skillPath, path.join(bundledSkillsDir, skill));
 }
 
@@ -99,7 +99,6 @@ copyFile(
 
 for (const skill of officialSkills) {
   const skillPath = path.join(sourceSkillsDir, skill);
-  if (!fs.existsSync(path.join(skillPath, 'SKILL.md'))) continue;
   copyDir(skillPath, path.join(bundledCodexSkillsDir, skill));
 }
 

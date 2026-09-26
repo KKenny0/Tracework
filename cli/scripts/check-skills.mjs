@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import { skillCopies } from './skill-copies.mjs';
+import { skillCopies, officialSkills, validateSkillSources } from './skill-copies.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
@@ -25,16 +25,7 @@ const sourceClaudePluginManifest = path.join(repoRoot, '.claude-plugin', 'plugin
 const claudeMarketplace = path.join(repoRoot, '.claude-plugin', 'marketplace.json');
 const codexMarketplace = path.join(repoRoot, '.agents', 'plugins', 'marketplace.json');
 const pluginPathsSource = path.join(repoRoot, 'cli', 'src', 'plugin-paths.ts');
-const officialSkills = [
-  'capture',
-  'recall',
-  'query',
-  'daily',
-  'weekly',
-  'monthly',
-  'roadmap',
-  'cold-start-interview',
-];
+
 
 const officialAssets = [
   'logo.png',
@@ -46,6 +37,8 @@ const siteBrandAssets = [
   'logo.png',
   'mark.svg',
 ];
+
+validateSkillSources(repoRoot);
 
 const errors = [];
 const maxSkillLines = 500;
