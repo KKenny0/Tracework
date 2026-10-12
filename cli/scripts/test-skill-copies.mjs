@@ -24,7 +24,7 @@ try {
   assert.deepEqual(fs.readdirSync(path.join(repo, 'skills')).filter(name => fs.existsSync(path.join(repo, 'skills', name, 'SKILL.md'))).sort(), [...officialSkills].sort());
   const { listSkills } = await import('../dist/utils.js');
   assert.deepEqual(listSkills(), officialSkills);
-  fs.symlinkSync(path.join(repo, 'cli/node_modules'), path.join(temp, 'cli/node_modules'), 'dir');
+  fs.symlinkSync(path.join(repo, 'cli/node_modules'), path.join(temp, 'cli/node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
   // Simulate stale installed bundles: regeneration must remove retired skills.
   for (const root of ['cli/skills', 'plugins/tracework/skills']) {
     for (const skill of ['query', 'recall', 'roadmap']) {

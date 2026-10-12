@@ -176,7 +176,13 @@ class EffectiveState(unittest.TestCase):
     def test_same_vault_symlink_cannot_cross_project(self):
         other = self.path.with_name('other.json')
         other.write_bytes(self.path.read_bytes())
-        self.path.unlink(); self.path.symlink_to(other)
+        self.path.unlink()
+        try:
+            self.path.symlink_to(other)
+        except OSError as error:
+            if getattr(error, 'winerror', None) == 1314:
+                self.skipTest('Windows token cannot create file symlinks; exercised by Linux CI')
+            raise
         before = other.read_bytes()
         with self.assertRaises(ValueError): self.view()
         with self.assertRaises(ValueError): self.append(correction(self.original, 0))

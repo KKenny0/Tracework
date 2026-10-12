@@ -197,10 +197,14 @@ function runCaptureHelperRepairFixture(fixture) {
 function runCaptureHelperReportingValidFixture(fixture) {
   const config = fixture.fixture || {};
   const slug = config.project_slug;
-  const entry = config.entry;
+  const entry = structuredClone(config.entry);
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'tracework-regression-'));
   const tempVault = path.join(tempRoot, 'vault');
   const entryPath = path.join(tempRoot, 'reporting-entry.json');
+  // Repository roots in executable fixtures use the host's path syntax.
+  for (const ref of entry.source_refs || []) {
+    if (ref.type === 'repository_snapshot') ref.path = tempRoot;
+  }
 
   try {
     fs.mkdirSync(tempVault, { recursive: true });
@@ -245,7 +249,7 @@ function runCaptureHelperReportingValidFixture(fixture) {
         appended.source_refs?.some(ref => (
           ref.type === 'repository_snapshot'
           && ref.ref === config.expected_repository_snapshot_ref
-          && ref.path === config.expected_repository_snapshot_path
+          && ref.path === tempRoot
         )),
         `${fixture.id}: immutable repository snapshot not preserved`,
       );
@@ -264,7 +268,7 @@ function runCaptureHelperReportingValidFixture(fixture) {
       const invalidEntry = structuredClone(entry);
       const snapshot = invalidEntry.source_refs.find(ref => ref.type === 'repository_snapshot');
       snapshot.ref = probe.ref;
-      snapshot.path = probe.path;
+      snapshot.path = probe.path === config.expected_repository_snapshot_path ? tempRoot : probe.path;
       const invalidPath = path.join(tempRoot, `invalid-snapshot-${index}.json`);
       fs.writeFileSync(invalidPath, JSON.stringify(invalidEntry, null, 2), 'utf-8');
       const result = spawnSync('python3', [
@@ -573,7 +577,7 @@ function runMonthlyPrepareDailyReportFixture(fixture) {
     );
     fs.writeFileSync(
       path.join(tempVault, 'raw', 'projects.json'),
-      `${JSON.stringify([{ name: config.expected_project, slug: config.expected_slug, path: '/tmp/tracework', reporting_group: config.expected_reporting_group }], null, 2)}\n`,
+      `${JSON.stringify([{ name: config.expected_project, slug: config.expected_slug, path: tempRoot, reporting_group: config.expected_reporting_group }], null, 2)}\n`,
       'utf-8',
     );
     const result = spawnSync('python3', [

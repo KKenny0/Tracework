@@ -62,6 +62,11 @@ class SessionScanTest(unittest.TestCase):
         self.vault = self.root / "vault"
         self.home.mkdir()
         self.vault.mkdir()
+        # Neutral command cwd: an empty local config stops discovery from
+        # treating a host ancestor config as a project override of our fake home.
+        self.runner = self.root / 'runner'
+        (self.runner / '.tracework').mkdir(parents=True)
+        (self.runner / '.tracework/config.yaml').write_text('', encoding='utf-8')
         (self.home / ".tracework").mkdir()
         (self.home / ".tracework" / "config.yaml").write_text(
             "\n".join(
@@ -126,7 +131,7 @@ class SessionScanTest(unittest.TestCase):
             input=json.dumps(payload) if payload is not None else None,
             text=True,
             capture_output=True,
-            cwd=self.home,
+            cwd=self.runner,
             env=self.env(runtime),
             check=True,
         )

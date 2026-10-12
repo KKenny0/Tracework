@@ -107,14 +107,27 @@ class DailyReporting(unittest.TestCase):
         for bodies in [{'all': 'x'}, {'': 'x'}, {'work': ''}, {'work': '### 2026.01.01'}, {'work': '<!-- /tracework:daily -->'}]:
             with self.assertRaises(writer.Conflict):
                 writer.merge(b'', '2026-09-12', bodies)
+    def test_symlink_output_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             original = Path(tmp) / 'original'
             original.write_bytes(b'user')
             link = Path(tmp) / 'link'
-            link.symlink_to(original)
+            try:
+                link.symlink_to(original)
+            except OSError as error:
+                if getattr(error, 'winerror', None) == 1314:
+                    self.skipTest('Windows token cannot create file symlinks; exercised by Linux CI')
+                raise
             with self.assertRaises(writer.Conflict):
                 writer.update(link, '2026-09-12', {'work': 'new'}, writer.digest(b'user'))
             self.assertEqual(original.read_bytes(), b'user')
+
+    def test_missing_parent_is_not_created(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'absent' / 'Daily.md'
+            with self.assertRaises(FileNotFoundError):
+                writer.update(path, '2026-09-12', {'work': 'Draft'}, 'missing')
+            self.assertFalse(path.parent.exists())
 
     def test_monthly_raw_old_new_none(self):
         view = {'status': 'complete', 'scope': 'work', 'scope_source': 'explicit',
@@ -184,20 +197,22 @@ class DailyReporting(unittest.TestCase):
         shared = ROOT / 'references/reporting-narrative-contract.md'
         weekly = ROOT / 'skills/weekly'
         monthly_dir = ROOT / 'skills/monthly'
+        # Shared clarity rules add ~3k characters; monthly additionally loads
+        # its mandatory source-review guide. Keep explicit, bounded read paths.
         paths = {
-            'weekly quick': ([weekly/'SKILL.md', shared], 12000),
-            'weekly brief': ([weekly/'SKILL.md', shared, weekly/'references/weekly-analysis-contract.md', weekly/'references/weekly-brief-template.md'], 30000),
+            'weekly quick': ([weekly/'SKILL.md', shared], 15000),
+            'weekly brief': ([weekly/'SKILL.md', shared, weekly/'references/weekly-analysis-contract.md', weekly/'references/weekly-brief-template.md'], 33000),
             'weekly slides': ([weekly/'SKILL.md', shared, weekly/'references/weekly-analysis-contract.md', weekly/'references/weekly-slides-contract.md', weekly/'references/slide-template.md'], 58000),
-            'monthly raw': ([monthly_dir/'SKILL.md', shared, monthly_dir/'references/worklog-summary-template.md'], 18000),
+            'monthly raw': ([monthly_dir/'SKILL.md', shared, monthly_dir/'references/worklog-summary-template.md', monthly_dir/'references/monthly-source-review.md'], 29000),
         }
         for name, (files, budget) in paths.items():
-            count = sum(len(p.read_text()) for p in files)
+            count = sum(len(p.read_text(encoding='utf-8')) for p in files)
             print(f'{name}: {count}/{budget} characters')
             self.assertLessEqual(count, budget, name)
-        weekly_text = (weekly/'SKILL.md').read_text()
+        weekly_text = (weekly/'SKILL.md').read_text(encoding='utf-8')
         self.assertIn('Quick must not load analysis or templates', weekly_text)
         self.assertIn('brief must not load slides rules', weekly_text)
-        self.assertIn('only when Daily input exists', (monthly_dir/'SKILL.md').read_text())
+        self.assertIn('only when Daily input exists', (monthly_dir/'SKILL.md').read_text(encoding='utf-8'))
 
 
 if __name__ == '__main__':

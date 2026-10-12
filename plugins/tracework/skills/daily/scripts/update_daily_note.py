@@ -2,7 +2,7 @@
 """Merge generated daily bodies without replacing user edits or stale snapshots."""
 import argparse
 from datetime import date
-import fcntl
+from tracework_raw import json_lock
 import hashlib
 import json
 import os
@@ -114,8 +114,8 @@ def update(path, day, bodies, expected_hash):
     path = Path(path)
     # ponytail: advisory per-file lock serializes this writer, unrelated editors
     # use the snapshot check; filesystem-wide compare-and-swap if ever available.
-    with path.with_name(path.name + '.tracework.lock').open('a') as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
+    path.parent.stat()  # Preserve the existing requirement that the vault directory exists.
+    with json_lock(path.with_name(path.name + '.tracework')):
         before = snapshot(path)
         actual = digest(before) if before is not None else 'missing'
         if actual != expected_hash:

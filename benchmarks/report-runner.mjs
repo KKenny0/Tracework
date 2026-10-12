@@ -39,6 +39,13 @@ export async function captureCommand({ command, args = [], input = '', cwd, outp
     try {
       event = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
       if (!event || typeof event.type !== 'string') throw new Error('Missing event type');
+      if (event.type === 'stream_event' && event.event?.delta?.type === 'text_delta'
+        && typeof event.event.delta.text !== 'string') throw new Error('Invalid text delta');
+      if (event.type === 'assistant' && !event.is_api_error_message && !sawDeltas) {
+        const blocks = event.message?.content ?? [];
+        if (!Array.isArray(blocks) || blocks.some(block => !block || typeof block !== 'object'
+          || (block.type === 'text' && typeof block.text !== 'string'))) throw new Error('Invalid assistant content');
+      }
     } catch {
       protocolErrors++;
       log({ type: 'protocol_error', bytes: bytes.length });

@@ -129,13 +129,13 @@ class EvidenceFlowTests(unittest.TestCase):
             with self.subTest(date=date):
                 note = self.root / 'Daily Note.md'
                 body = f'### {date}\n\n- [Probe]\n  - 进展：已记录，仍待验证\n'
-                note.write_text(body)
+                note.write_text(body, encoding='utf-8')
                 months, _ = split.parse_daily_note(note)
                 self.assertEqual(''.join(months['2026-08']), body)
                 archive = self.root / '2026-08.md'
-                archive.write_text(''.join(months['2026-08']))
+                archive.write_text(''.join(months['2026-08']), encoding='utf-8')
                 view = {'status': 'complete', 'period': {'start': '2026-08-01', 'end': '2026-08-31'}, 'groups': {'work': [{'slug': 'probe', 'reporting_group': 'work'}]}}
-                archive.write_text(body.replace('[Probe]', '[probe]'))
+                archive.write_text(body.replace('[Probe]', '[probe]'), encoding='utf-8')
                 parsed = monthly.parse_monthly_file(archive, '2026-08', view)
                 self.assertEqual(len(parsed), 1)
                 self.assertIn('已记录，仍待验证', parsed[0]['text'])
@@ -151,6 +151,17 @@ class ScopeTests(unittest.TestCase):
         home = patch.object(Path, 'home', return_value=self.root)
         home.start()
         self.addCleanup(home.stop)
+        # The fake home must not make the host's real home config an ancestor
+        # project config. Keep config discovery inside this test's filesystem.
+        exists = Path.exists
+        def fixture_exists(path):
+            if (path.name == 'config.yaml' and path.parent.name == '.tracework'
+                    and not path.is_relative_to(self.root)):
+                return False
+            return exists(path)
+        discovery = patch.object(Path, 'exists', fixture_exists)
+        discovery.start()
+        self.addCleanup(discovery.stop)
 
     def write(self, relative, value):
         path = self.root / relative

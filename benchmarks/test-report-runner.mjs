@@ -81,6 +81,20 @@ for (const [name, code, status] of [
   });
 }
 
+for (const [name, event] of [
+  ['non-text delta', { type: 'stream_event', event: { delta: { type: 'text_delta', text: { wrong: true } } } }],
+  ['non-array assistant content', { type: 'assistant', message: { content: {} } }],
+  ['non-text assistant block', { type: 'assistant', message: { content: [{ type: 'text', text: ['wrong'] }] } }],
+]) {
+  test(`retains malformed content as protocol_error: ${name}`, async t => {
+    const dir = setup(t);
+    const out = await fixture(dir, emit(event) + emit(terminal('# Report')));
+    assert.equal(out.status, 'protocol_error');
+    assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'outcome.json'))).status, 'protocol_error');
+    assert.ok(fs.readFileSync(path.join(dir, 'stdout.ndjson'), 'utf8').includes(JSON.stringify(event)));
+  });
+}
+
 test('missing executable produces launch_error with persisted diagnostics', async (t) => {
   const dir = setup(t);
   const out = await captureCommand({ command: path.join(dir, 'missing-executable'), outputDir: dir, timeoutMs: 2_000 });
