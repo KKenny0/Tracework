@@ -22,6 +22,7 @@ Read:
 - `references/reporting-narrative-contract.md`
 - `references/daily-note-format.md` only when Daily input exists or archiving is requested
 - `references/worklog-summary-template.md`
+- `references/monthly-source-review.md` before drafting and delivering any review
 - `references/project-tagging-guide.md` when Daily project labels are ambiguous
 - `references/tracework-storage-convention.md` only when resolving storage/schema details
 
@@ -113,7 +114,11 @@ Preserve source text and respect the configured overwrite policy. If Daily Note
 is missing, explain that no archive was created and continue the review from raw.
 Do not manufacture a blank archive to satisfy the context helper.
 
-### 4. Write the Review
+### 4. Draft the Review
+
+Read `references/monthly-source-review.md` and fix the source version and material
+project facts before drafting. Treat this as a draft until Step 5 passes; do not
+write the final review path yet.
 
 Use effective raw entries for claims and effective_views.states for current
 risks/questions. Separate accepted risks, retain conflicts and unassociated
@@ -123,7 +128,13 @@ raw status.
 
 For each reporting group:
 
-- Write one monthly judgment.
+- Write an informative monthly judgment covering actual changes, concrete
+  verification, month-end limits and supported next steps. Use as much space as
+  those facts need; necessary repetition is acceptable. Introduce independent
+  projects through their own results rather than forcing a shared state.
+- Treat template placeholders as optional: omit unsupported constraints,
+  remaining gates or follow-ups. These drafting rules take precedence over the
+  template's one-paragraph suggestion and generic empty fields.
 - Select supported phase-result arcs; one is enough for sparse evidence.
 - Keep all remaining meaningful projects in the portfolio.
 - Surface only recurring risks supported by repeated timestamps, explicit
@@ -134,10 +145,24 @@ For each reporting group:
 `all` is a private combined review with separate complete sections per group.
 Never rank work and personal projects together.
 
-### 5. Report Execution
+### 5. Review Sources and Decide Delivery
+
+Follow `references/monthly-source-review.md` on the complete draft. Inspect the
+sources yourself even when an automated or separate-agent review says pass.
+Record the checked version, reviewer mode, findings and revision count. Make at
+most one consolidated correction, then review the entire new version again.
+
+Only `source_reviewed` output can be presented as final, and its existing scope,
+coverage and write policy still apply. Return unresolved work as a labeled draft;
+preserve existing final files. This review is part of this skill in every runtime,
+not a dependency on a benchmark runner, a particular model or an external CLI.
+
+### 6. Report Execution
 
 Return actual output paths (or conversation-only), selected scope, raw coverage, Daily-only coverage,
-warnings, and whether existing files were overwritten.
+warnings, and whether existing files were overwritten. Include source-review
+disposition, reviewer mode and revision count; distinguish first-draft quality
+from final delivery quality.
 
 ## Conflict Rules
 
@@ -161,5 +186,7 @@ warnings, and whether existing files were overwritten.
 - Recurring risks have actual repeated or carried evidence.
 - Next-month targets name closure gates, not every task.
 - Candidate Rules appear only when explicitly requested.
-- Main review is roughly 40-80 lines per group, excluding appendices.
+- Opening retains the facts needed for judgment; length follows the evidence.
+- The exact delivered version passed whole-report source review; unresolved
+  findings remain drafts and never replace a final report.
 - Activity counts never substantiate outcomes.
