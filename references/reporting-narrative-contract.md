@@ -91,6 +91,40 @@ Every headline narrative should explain:
 Do not promote implementation volume into narrative importance. Commits, files,
 line counts, tokens, and active days are evidence or coverage metadata.
 
+## Clear Expression
+
+These clarity principles draw on ASD-STE100; this section neither requires nor
+certifies compliance with its controlled-English standard. Apply only the
+guidelines stated here, preserving the report's language and requested format.
+They govern human-facing Daily, Weekly and Monthly content, not raw records,
+field names or evidence references.
+
+- **Keep names and referents consistent.** Use the same name for the same
+  project, feature or issue. Name the object when a pronoun could refer to more
+  than one thing. Preserve exact interface labels and distinct concepts.
+- **Keep conditions beside claims.** Attach prerequisites, scope, exceptions
+  and negations to the actions or results they qualify. Preserve necessary
+  versus sufficient conditions and required sequence. Limits such as "tested
+  only locally" or "production behavior remains unverified" belong beside the
+  conclusion, not only in an appendix.
+- **Preserve status and certainty.** Distinguish advice, permission,
+  requirements and capability, as well as proposed, decided, started,
+  completed and verified work. State expected benefits as expectations;
+  completion of an action does not by itself verify its effect.
+- **Shorten without losing meaning.** Remove repetition and empty wording while
+  retaining causes, boundaries and unresolved issues needed to understand the
+  result. Leave clear wording alone; do not impose short sentences, fixed word
+  limits or item counts.
+- **Describe concrete changes.** Explain the problem, the action taken and
+  what is different now. Internal analysis terms need not appear in the prose;
+  abstract wording such as "推进", "闭环" or "赋能" cannot substitute for facts.
+  Describe impacts only as far as the evidence supports them.
+
+Before delivery, check whether the body alone explains what changed, what
+supports that judgment and what remains unconfirmed. Keep material limits in
+the body and detailed provenance in the evidence appendix. State evidence gaps
+rather than inventing causes, benefits or next steps.
+
 ## Closure Types
 
 - `delivery`: a deliverable or usable state now exists.
