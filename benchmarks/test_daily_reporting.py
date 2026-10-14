@@ -33,6 +33,24 @@ def concurrent_write(path, expected, text, queue):
         queue.put('conflict')
 
 
+def paused_lock_initialization(path, initialized, release):
+    raw = sys.modules[writer.json_lock.__wrapped__.__module__]
+    original = raw.prepare_lock_file
+    def pause(handle):
+        initialized.set()
+        if not release.wait(5):
+            raise TimeoutError('Initializer was not released')
+        original(handle)
+    with patch.object(raw, 'prepare_lock_file', pause), writer.json_lock(path):
+        pass
+
+
+def enter_second_lock(path, started, entered):
+    started.set()
+    with writer.json_lock(path):
+        entered.set()
+
+
 class DailyReporting(unittest.TestCase):
     def test_owned_blocks_idempotence_and_byte_preservation(self):
         original = b'User preface\r\n### 2026.09.11\r\nOld user text\r\n'
@@ -99,6 +117,28 @@ class DailyReporting(unittest.TestCase):
                 worker.join(10)
                 self.assertEqual(worker.exitcode, 0)
             self.assertEqual(sorted(queue.get(timeout=2) for _ in workers), ['conflict', 'updated'])
+
+    def test_lock_initialization_excludes_other_writers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'Daily.md.tracework'
+            ctx = multiprocessing.get_context('spawn')
+            initialized, release, started, entered = [ctx.Event() for _ in range(4)]
+            first = ctx.Process(target=paused_lock_initialization, args=(path, initialized, release))
+            second = ctx.Process(target=enter_second_lock, args=(path, started, entered))
+            first.start()
+            try:
+                self.assertTrue(initialized.wait(5))
+                second.start()
+                self.assertTrue(started.wait(5))
+                self.assertFalse(entered.wait(0.5), 'Another writer entered during lock initialization')
+            finally:
+                release.set()
+                first.join(10)
+                if second.pid is not None:
+                    second.join(10)
+            self.assertEqual(first.exitcode, 0)
+            self.assertEqual(second.exitcode, 0)
+            self.assertTrue(entered.is_set(), 'Second writer must enter after initialization is released')
 
     def test_input_boundaries(self):
         for day in ['20260912', '2026-W37-6', '2026-02-30']:

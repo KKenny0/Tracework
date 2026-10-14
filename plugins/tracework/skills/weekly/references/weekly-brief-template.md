@@ -19,9 +19,10 @@ reader's judgment, action, or confidence. Move accountability, coverage, and
 provenance to the appendix. Do not use a fixed length or item count.
 
 For no-vault or local first-run conversation output, prefer the compact shape
-in `SKILL.md` (目标与判断 / 目标推进 / 偏差与决策 / 下周承诺 /
-证据边界). Label scope `local` when the current repo is unassigned under
-implicit scope; never present that lane as `work`.
+in `SKILL.md` (目标与判断 / 目标推进 / 偏差与决策 / 后续安排 /
+证据边界). Use `下周承诺` only for supported next-week timing. Label scope
+`local` when the current repo is unassigned under implicit scope; never present
+that lane as `work`.
 
 ```markdown
 # YYYY-WNN 工作汇报
@@ -39,14 +40,15 @@ material variance, current decision, and largest remaining gate.}
 
 ### {conclusion-led management change}
 
-- **实际变化：** {observable change}
-- **管理意义：** {why it changes the goal state or management judgment}
-- **剩余门槛：** {what is not closed}
+- **实际变化：** {observable behavior or result, including a supported decisive choice}
+- **管理意义：** {why it changes the goal state or management judgment, if supported}
+- **剩余门槛：** {recorded unresolved acceptance condition, only when one exists}
 
-Show an evidence boundary here only when the claim is `limited`, conflicting,
-or expected-only. Verified provenance stays in the appendix. Repeat only when
-another independent change survives the counterfactual deletion test. Multiple
-activities that prove one conclusion stay together.
+Omit unsupported lines. Missing effect measurements qualify the result; they do
+not create unfinished tasks or acceptance gates. Keep material check, sample,
+and acceptance limits beside the claim, including recorded or verified results.
+Detailed provenance stays in the appendix. Repeat only when another independent
+change survives the deletion test. Activities proving one conclusion stay together.
 
 When admitted by **Change Explanation Card Projection** in
 `weekly-analysis-contract.md`, replace that result's three-line block with:
@@ -79,13 +81,17 @@ the compact result above. Do not turn portfolio rows into cards.
 
 When none exists, write `本周没有需要升级的重要偏差、决策或协作事项。`
 
-## 下周承诺
+## 后续安排
 
-- **{commitment}:** {specific pass/fail closure criterion} ·
-  {confirmed | proposed}
+- **{recorded next action or plan}:** {recorded timing and closure criterion,
+  or explicitly not recorded} · {confirmed | proposed}
 
-Do not force a count or list every task. A report proposal must remain
-`proposed` until the user or another explicit source confirms it.
+Use `下周承诺` instead only when the listed timing is supported as next week;
+mark proposals visibly and do not imply their timing was confirmed. Undated
+agreed actions remain undated; this-week deadlines do not become next-week
+promises. Keep parallel plans parallel. Do not add acceptance requirements to
+fill this section. A suggested extra criterion is separately `proposed`.
+Do not force a count. A report proposal stays `proposed` until explicitly confirmed.
 
 ---
 
@@ -97,8 +103,10 @@ Do not force a count or list every task. A report proposal must remain
 |------|------------|----------|----------------|
 | {goal or prior item} | {source} · {confirmed | inferred | unknown} · {confirmed | proposed} | {met | advanced | blocked | replanned | not_started} | {criterion or reason} |
 
-Include every goal and every prior-period item. Omit prior rows only when no
-previous Weekly item exists.
+Include every goal and every prior-period item. For a rejected or unapproved
+suggestion, retain its proposed origin and recorded disposition without forcing
+a goal status; rejection is not `replanned`. A missing completion record does
+not prove `not_started`. Omit prior rows only when no previous Weekly item exists.
 
 ### 工作组合
 
@@ -134,7 +142,8 @@ extracted without personal references.
 - Replanned work preserves the prior direction, evidence trigger, reason, and
   new direction.
 - Every meaningful remaining stream appears in the portfolio.
-- Every unresolved risk or next commitment has a concrete closure criterion.
+- Every unresolved risk or next commitment keeps its recorded closure criterion
+  or states that it is not recorded; new criteria remain separate proposals.
 - The body alone reconstructs goal state, actual change, material variance,
   decision or support, next commitment, and confidence boundary.
 - Every body block survives counterfactual deletion; full prior-item,

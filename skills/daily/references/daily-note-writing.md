@@ -13,7 +13,8 @@ Use the same short prose in conversation and vault output:
 ```markdown
 #### 今日判断
 
-{Most important state change and remaining gate, in one or two sentences.}
+{Most important supported state change in one or two sentences; add a remaining
+ gate only when one is recorded.}
 
 #### 必要进展
 
@@ -33,7 +34,19 @@ Use the same short prose in conversation and vault output:
 ```
 
 One supported change is enough. Omit empty sections. Cover meaningful secondary
-work briefly; do not invent risks or next steps. Git-only claims stay limited.
+work briefly; do not invent risks or next steps. Missing independent reports,
+effect measurements, or root-cause details qualify the result; they are not new
+required tasks. Omit `下一道门` when no gate is recorded. Git-only claims stay limited.
+For each selected change, explain what behavior changed and the supported choice
+or constraint that defines it before listing delivery status or checks. A feature
+name plus a commit and test count is not that explanation. When stating an
+eligibility rule, keep every condition and exception that changes which cases
+qualify; otherwise give a bounded description, not an incomplete substitute
+rule. Do not derive required order or dependencies from a list of open issues;
+any suggested plan stays visibly proposed. Keep decisive scope and fallback
+limits when shortening, without an implementation inventory. Re-read the body
+alone before writing: one change's commit, push, or acceptance must not appear
+to cover another change.
 A reader should understand the day in about one minute per reporting group.
 No fixed project labels or field list are required for new reports. Monthly
 uses raw first and reads this prose only as prior editorial judgment.

@@ -85,7 +85,10 @@ Account for every prior-period item:
 ```
 
 No prior item may disappear. For replanned work, retain the former direction,
-evidence trigger, reason, and replacement direction.
+evidence trigger, reason, and replacement direction. A rejected suggestion is
+not replanned work: retain its proposed origin and recorded rejection without
+forcing a goal-status value. Leave unsupported analysis statuses unset; the
+absence of a completion record establishes neither `not_started` nor `blocked`.
 
 ## Work Streams and Material Changes
 
@@ -294,9 +297,14 @@ Write the weekly judgment after selection. Synthesize the original goal or
 missing-source boundary, actual change, material variance, current decision, and
 largest remaining gate. Never combine work and personal judgments.
 
-Return only justified next commitments; do not force a count. Each names an
-uncertainty, acceptance gate, decision, or risk, with a pass/fail closure
-criterion and `confirmed` or `proposed` commitment state.
+Return only justified next commitments; do not force a count. Keep agreement to
+an action separate from agreement to its timing or acceptance conditions. Use
+only recorded closure criteria; if absent, say they are not recorded. Additional
+writer-suggested criteria remain `proposed`, not prerequisites for agreed work.
+Do not turn absent effect measurements into new tasks or gates. A next-week
+commitment needs supported next-week timing; retain undated actions as undated
+and other dated plans in their actual period. Preserve recorded parallel work
+and dependencies rather than deriving a new sequence from report order.
 
 ## Evidence
 

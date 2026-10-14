@@ -11,7 +11,7 @@
     {
       "name": "tracework",
       "description": "Turn agent work into evidence-backed progress reports — daily, weekly, and monthly.",
-      "version": "0.13.3",
+      "version": "0.13.4",
       "author": {
         "name": "Kennywu",
         "email": "jdlow@live.cn"

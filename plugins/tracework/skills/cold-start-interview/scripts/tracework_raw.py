@@ -56,7 +56,7 @@ def write_json_atomic(path: Path, value: Any) -> None:
 
 
 def prepare_lock_file(handle: Any) -> None:
-    """Ensure the Windows byte-range lock has a region to acquire."""
+    """Initialize the byte region after mutual exclusion is acquired."""
     handle.seek(0, os.SEEK_END)
     size = handle.tell()
     if size < LOCK_REGION_BYTES:
@@ -108,9 +108,9 @@ def json_lock(path: Path):
     descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
     os.chmod(lock_path, 0o600)
     with os.fdopen(descriptor, "r+b") as handle:
-        prepare_lock_file(handle)
         lock_json_handle(handle)
         try:
+            prepare_lock_file(handle)
             yield path
         finally:
             unlock_json_handle(handle)
