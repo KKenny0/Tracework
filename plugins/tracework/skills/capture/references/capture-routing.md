@@ -74,7 +74,9 @@ Expected fields:
   durable artifact governs future work
 
 Deep capture is justified by decision density or artifact/contract importance,
-not by token count, file count, or how long the session felt.
+not by token count, file count, or how long the session felt. Use the
+entry-writing explanation and checks at every depth; deep preserves more
+supported reasoning and trade-offs, not more process detail.
 
 ## Checkpoint Mode
 

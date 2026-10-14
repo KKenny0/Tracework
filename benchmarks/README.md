@@ -19,6 +19,8 @@ For each local benchmark run, record:
 
 ## Public Protocols
 
+- `capture-entry-quality.md` separates source fidelity from standalone reading
+  and defines comparisons of old and new capture rules on real session drafts.
 - `weekly-outline.md` documents the quality bar for scoped weekly management briefs.
 - `reporting-narrative.md` defines executable contract checks plus real-output evaluation.
 - `report-contract.mjs` validates scope, headline budgets, portfolio coverage, and audience safety.

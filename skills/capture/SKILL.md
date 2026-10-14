@@ -32,8 +32,9 @@ needed:
 
 - `references/capture-routing.md`: choose `capture_depth` and handle explicit
   lite/standard/deep overrides. Read before finalizing entries.
-- `references/capture-entry-writing.md`: write raw entries, artifact context,
-  reporting metadata, Markdown fallback, and quality checks.
+- `references/capture-entry-writing.md`: build a standalone explanation before
+  filling raw fields; check source fidelity, then add evidence, artifact context,
+  reporting metadata, and Markdown fallback. Read for every entry.
 - `references/capture-operations.md`: resolve config, call `tracework_raw.py`,
   write artifact dossiers, and format quiet receipts.
 - `references/capture-corrections.md`: explicit correction of a stored fact only.
@@ -76,9 +77,9 @@ optional fields.
    - Read `references/capture-entry-writing.md`.
    - Classify the primary archetype: `decision`, `repair`, `investigation`,
      `build`, or `maintenance`.
-   - Extract only durable signals: goal, state change, decision/trade-off,
-     rejected path, risk, evidence boundary, artifact context, and next useful
-     action.
+   - Build the supported explanation before filling fields, following the
+     entry-writing reference: goal, key cause or constraint, chosen action and
+     reason, result, and remaining gate. Preserve material changes of direction.
    - Group related work into 1-3 entries. Use at most 5 entries for unusually
      broad sessions.
    - For normal session-end or checkpoint capture, resolve one immutable
@@ -104,6 +105,8 @@ optional fields.
    - Do not assign report-local `O#`, `W#`, `D#`, or `E#` labels.
 
 4. **Write or fallback.**
+   - Apply the standalone-reading and source-fidelity checks in
+     `references/capture-entry-writing.md` before persistence.
    - Read `references/capture-operations.md`.
    - Use `tracework_raw.py append-entry` as the canonical write path.
    - Upsert artifact dossiers when warranted and enabled.
@@ -142,7 +145,7 @@ one-line setup hint after the Markdown recap.
 
 Before finalizing each entry, check:
 
-- Does the entry explain why the work mattered, not just what files changed?
+- Have both entry-writing checks passed: standalone reading and source fidelity?
 - Is `capture_depth` no heavier than the signal deserves?
 - Does `status` bound the claim as done, ongoing, risk, or decision?
 - Does `reporting.outcome_candidate.kind`, when present, avoid overstating the

@@ -18,25 +18,107 @@ is usually `decision`.
 
 ## Signal Extraction
 
-Extract in this order:
+Extract only facts and decisions supported by the session. First make a private
+checklist of material facts: the goal, final choice and rationale, important
+rejected paths, scope and quotas, results with their comparison basis, and
+unresolved implementation, approval, release, or acceptance boundaries. Keep
+reported evidence distinct from what was directly checked. This checklist is a
+drafting aid, not an additional raw field or a user-facing step.
 
-- motivation: the explicitly stated problem, goal, or constraint; preserve the
-  intended state change before describing activity
-- changed state: capability, fix, refactor, decision, risk, or progress
-- reporting boundary: outcome, progress, or activity; impact and evidence
-  boundary
-- evidence: raw source refs, commits, evals, docs, source-of-truth artifacts
-- decisions and trade-offs: chosen path, rejected alternatives, deferred
-  choices
-- open questions and risks
-- artifact context: durable artifacts materially created or changed
+Then organize the work into a short explanation: the problem or goal, the key
+cause or constraint, the chosen action and its reason, the observed result, and
+the remaining gate.
+Ask who acted on what, what the action did, and what changed. Draft those
+relationships in ordinary project language before introducing internal labels.
+These are drafting questions, not a required visible template.
+Use the parts actually present in the source; missing reasons stay unknown.
+Chronology alone does not establish causality.
 
-When already stated in the session, preserve what should change in `motivation`
-and the pass/fail acceptance gate in `context` or `open_questions`. Keep a next
-step proposed unless the user explicitly committed to it. Do not ask for optional
-fields or invent a goal from completed actions.
+Keep a material change of direction and why it happened. For example, when a
+first approach fails and the session changes course, retain the evidence that
+changed the choice. A checkpoint needs just enough earlier context to explain
+its new result; it need not repeat the whole session.
 
-Skip process-only noise unless it explains a larger report-worthy signal.
+Then distribute that explanation across the existing fields:
+
+- `summary`: the concrete change or finding and the boundary reached
+- `context`: the problem and the shortest causal explanation needed to
+  understand the change
+- `motivation`: why the work was needed, when that adds to `context`
+- `impact`: the supported consequence, distinguishing observed from expected
+- `exploration_paths` and `abandoned_alternatives`: material attempts, results,
+  and choices with their reasons
+- `open_questions`: the remaining decision, evidence gap, or next useful action
+- evidence and artifact fields: locators and the detail needed to inspect claims
+
+When stated in the session, preserve the intended state change and acceptance
+gate. Keep a next step proposed unless the user explicitly committed to it.
+Optional fields do not require invented goals or additional questioning.
+Skip process-only noise unless it explains the durable signal.
+
+## Standalone Explanation
+
+Write for a colleague who knows the project but did not attend the session.
+They should understand `summary` and `context` without opening a transcript,
+following evidence links, or decoding implementation names. These fields orient
+the reader; the rest of the entry supplies the decision and evidence detail.
+
+- Describe who or what did what and what happened. Explain a necessary term on
+  first use through its behavior, then use that term consistently. A validator
+  name or an internal label is not an explanation of what it checks or changes.
+  Replace plan-item numbers with the task they refer to when the source states
+  that task; otherwise preserve the missing context as a limit.
+- Put the key cause beside its consequence. Preserve conditions, uncertainty,
+  and whether the explanation was observed, hypothesized, or only proposed.
+- Keep the current decision or implementation status and acceptance-blocking
+  limits beside the main result. When a local success leaves the overall goal
+  unproven, state both together instead of hiding the limit in `open_questions`.
+- Keep file counts, version strings, hashes, and error codes in evidence or
+  exploration fields unless a specific identifier is needed to distinguish
+  the subject. Explain such identifiers when they are needed in the main text.
+  Moving detail must not erase a material scope limit, request quota,
+  comparison basis, or implementation boundary.
+- Let each field add information. Present detailed evidence or numerical
+  comparisons once in the most suitable field. A short completion qualifier
+  may recur where needed; repeating the narrative obscures the result.
+- Use short sentences rather than packing several mechanisms and caveats into
+  one sentence. `deep` adds supported reasoning and trade-offs, not a longer
+  inventory of commands, files, and checks.
+
+For example, a session might establish that one malformed import row caused a
+whole batch to be rejected. A locally tested proposal preserves valid rows and
+retries only invalid rows, but has not shipped.
+
+Weak summary: "Validated selective repair closure; four-file plan pending."
+
+Useful summary: "A malformed row caused valid import rows to be rejected too;
+local tests support retrying only invalid rows, but the change has not shipped."
+
+The context should explain why the whole batch was rejected and why preserving
+valid rows is the proposed remedy, using only what the session established.
+The test count, validator name, and patch path remain available in the detail
+fields. This is an explanation pattern, not a required import workflow.
+
+### Before Writing
+
+Run two separate checks on the drafted entry:
+
+1. **Standalone reading:** using only `summary` and `context`, can a colleague
+   state what problem this addressed, what changed or was learned, and why?
+   Using the rest of the entry, can they state what the evidence supports and
+   what remains unresolved? Rewrite unexplained shorthand or missing links.
+2. **Source fidelity:** compare every material fact in the source checklist
+   with the whole entry. Preserve the final choice and rationale, material
+   rejected alternatives, scope and quotas, numbers with their comparison
+   basis, and unresolved implementation, approval, release, or acceptance
+   boundaries. Moving detail must not discard it. Distinguish a plan from
+   implementation, an offline replay from a new execution, and a reported
+   result from an independently checked one. Check causal links back to the
+   source; narrow unsupported causality instead of making the story sound
+   complete.
+
+Both checks must pass before persistence. Clear prose does not strengthen the
+evidence, and a valid JSON object does not prove either quality check passed.
 
 ## Raw Entry Shape
 
@@ -48,8 +130,8 @@ Follow `references/tracework-storage-convention.md`. New entries should use:
   "capture_depth": "lite | standard | deep",
   "archetype": "decision | build | investigation | repair | maintenance",
   "type": "feature | fix | refactor | decision | risk",
-  "summary": "1 factual sentence at the boundary reached",
-  "context": "1-2 sentences explaining why and impact",
+  "summary": "Concrete change or finding, with the boundary reached",
+  "context": "Short problem background and the key supported causal explanation",
   "source": "session-recap",
   "status": "done | ongoing | risk | decision",
   "work_stream": "optional report grouping hint",

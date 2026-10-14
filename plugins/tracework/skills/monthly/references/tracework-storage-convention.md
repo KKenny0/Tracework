@@ -368,8 +368,8 @@ Each `{vault}/raw/weeks/{week}/{slug}.json` file contains a **JSON array** of en
 | `capture_depth` | enum | No | `lite` \| `standard` \| `deep`; route chosen by capture to bound token cost and retained detail |
 | `archetype` | enum | Recommended for new entries | `decision` \| `build` \| `investigation` \| `repair` \| `maintenance`; describes the session shape |
 | `type` | enum | Yes | `feature` \| `fix` \| `refactor` \| `decision` \| `risk` |
-| `summary` | string | Yes | 1 factual sentence at the boundary actually reached; do not promote plans or partial work into shipped outcomes |
-| `context` | string | Yes | 1-2 sentences explaining why and impact |
+| `summary` | string | Yes | Short factual statement of the concrete change or finding and boundary reached; do not promote plans or partial work into shipped outcomes |
+| `context` | string | Yes | Short standalone explanation of the problem and supported reasoning, including the result or remaining gate needed to understand the change |
 | `related_docs` | string[] | No | Absolute paths to relevant documentation files |
 | `source` | enum | Yes | `session-recap` for new entries; `arch-doc` is legacy-only historical data |
 
@@ -569,23 +569,39 @@ fields.
 
 ### Writing `summary`
 
-One sentence that answers: **what was done + how**. Use active voice, specific technical nouns, avoid generic verbs.
+State the concrete change or finding and the boundary actually reached. Write
+for a project colleague who did not attend the session. Prefer short sentences
+over a sentence packed with internal labels and caveats. Describe what an actor
+or system did; explain a necessary technical term through its behavior.
 
-Pattern: `[Action verb] [specific output/change] [with/using/replacing key approach]`
+Keep current decision, implementation, approval, and release boundaries near
+the main claim when they affect what the reader can conclude. A `decision`
+status or a limitation elsewhere cannot rescue a summary that implies shipment.
 
-- Good: "Added retry-with-repair loop to narrative validation, replacing single-pass validation"
-- Good: "Extracted character extraction into a standalone stage with fan-out parallelism"
-- Avoid: "Updated documentation" / "Made improvements" / "Fixed issues"
+- Good: "Proposed retrying only invalid import rows so valid rows survive a repair; the change has not been implemented."
+- Good: "Separated character extraction from parsing so each stage can be tuned independently; integration tests passed, while original-video acceptance remains pending."
+- Avoid: "Closed selective repair protocol" / "Made improvements" / "Fixed issues"
 
 ### Writing `context`
 
-1-2 sentences that answer: **why this was needed + what impact it has**. Capture the design intent and reasoning that git commits rarely convey.
+Explain the source-supported problem, key cause or constraint, and why the
+chosen action addresses it. Include the observed result or remaining gate when
+needed to orient the reader. Use only the links established in the source;
+unknown reasons and hypotheses stay qualified. Do not turn chronology into
+causality or expected benefits into observed results.
 
-Pattern: `[Trigger/motivation]. [Approach chosen] → [expected impact or what it resolves].`
+Use as many short sentences as the explanation needs, while retaining only the
+context that helps a colleague understand the change. Put acceptance-blocking
+limits beside a local success when the overall goal is still unproven. Place
+locators and detailed evidence in their respective fields rather than repeating
+the whole account in each field.
 
-- Good: "Single-pass validation missed 3 recurring failure patterns from v2.3 eval. Repair loop now catches and corrects these automatically, reducing manual review by ~40%."
-- Good: "Character extraction was tightly coupled with parsing, blocking independent iteration. New isolation allows tuning extraction without risking parse stability."
-- Avoid: Repeating the summary / describing implementation details / vague statements like "improved quality"
+- Good: "One malformed row caused the whole import batch to be rejected. The proposal preserves valid rows and retries only invalid ones. Saved-response replay supports that approach, but the production change and acceptance test are still pending."
+- Avoid: Repeating the summary, unexplained plan-item numbers, or an inventory of commands and files.
+
+The examples assume these facts are present in the source. They do not authorize
+inventing a cause, test result, benefit, or acceptance gate. Capture applies its
+entry-writing completeness and standalone-reading checks before persistence.
 
 ### Quality Levels
 
