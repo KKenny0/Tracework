@@ -14,31 +14,39 @@
   <a href="https://kkenny0.github.io/projects/tracework/"><strong>Project page</strong></a> · <a href="https://kkenny0.github.io/Tracework/"><strong>Documentation</strong></a> · <a href="README.md">中文</a>
 </p>
 
-The Chinese README is the canonical product reference; this page mirrors its
-current product scope and command surface in English.
+Tracework is a local reporting and memory plugin for **Codex** and **Claude Code**.
 
-Say “wrap up” to keep the durable facts. Generate daily, weekly, and monthly
-reports when you need them.
+Say **“wrap up” (收工)** during day-to-day development to checkpoint durable facts, architectural tradeoffs, and key decisions. When it is time to update your team or management, generate **daily, weekly, and monthly progress reports with direct evidence backing**.
 
-Records stay in your own local vault. You can report before capturing: facts
-already visible in the current conversation can provide temporary evidence when
-the project, group, and work date are known. Reporting does not save those facts
-to long-term memory or read other conversations. Git-only reports remain
-`limited`, with explicit gaps instead of invented intent or outcomes.
+- **Evidence-Backed**: Every claim in a report can be traced back to raw entries, rejected alternatives, code changes, and identified risks. If records are missing, Tracework flags the coverage gap instead of hallucinating outcomes.
+- **Local Sovereignty**: All facts and reports stay in your own local vault. No external telemetry, no background conversation leakage, and total data privacy.
+- **Zero-Friction Preview**: Generate reports immediately in the active session without configuring a vault. When ready for durable storage, initialize with a single command.
 
-Tracework is a local reporting plugin for Codex and Claude Code with five skills:
-`capture` keeps key facts; `daily`, `weekly`, and `monthly` produce progress
-reports; `cold-start-interview` configures storage and project groups.
+> [!NOTE]
+> **Product Boundary Notice**  
+> Tracework is not a meeting-notes tool, approval workflow, performance-packaging layer, employee-monitoring surface, or generic office suite. Activity counts, commit counts, and lines of code describe coverage; they do not prove outcomes.
 
-Reports select projects before reading effective records, keeping work and
-personal groups separate. Monthly reviews use raw records and current risk
-states; Daily and Weekly reports provide prior judgments, so a complete Daily
-archive is optional. If some projects cannot be read, Tracework returns a
-conversation draft with coverage gaps and saves it only on explicit request.
+---
 
-## Try It First
+## Quickstart
 
-After install, try it in any project with recent work:
+### 1. Install Plugin
+
+#### Codex
+```bash
+codex plugin marketplace add KKenny0/Tracework
+codex plugin add tracework@tracework
+```
+
+#### Claude Code
+```bash
+claude plugin marketplace add KKenny0/Tracework
+claude plugin install tracework@tracework
+```
+
+### 2. Try It Immediately (Zero Config)
+
+After installing, try it directly in any project session with recent work:
 
 ```text
 write the weekly report
@@ -46,131 +54,107 @@ write the weekly report
 /tracework:weekly
 ```
 
-Or close today first: `write the daily report` / `/tracework:daily`.
+Or close today's work first: `write the daily report` / `/tracework:daily`.
 
-You can see a result in the conversation without configuring a vault. Run
-`/tracework:cold-start-interview` when you want durable storage, file writes,
-and strict work/personal partitioning.
+You do not need to configure a vault beforehand—Tracework renders an immediate preview right inside the conversation. When only Git history is available, Tracework generates a `limited` report that explicitly identifies evidence gaps.
 
-## Install
+### 3. Initialize Storage & Project Scopes (Optional)
 
-### Codex
-
-```bash
-codex plugin marketplace add KKenny0/Tracework
-codex plugin add tracework@tracework
-```
-
-### Claude Code
-
-```bash
-claude plugin marketplace add KKenny0/Tracework
-claude plugin install tracework@tracework
-```
-
-## Core Loop
+When you are ready to accumulate work over time, write reports to local Markdown files, and strictly separate workplace from personal projects, run:
 
 ```text
-agent work
-  -> wrap up and keep the durable facts
-  -> write daily / weekly / monthly reports
+/tracework:cold-start-interview
 ```
 
-| Frequency | What you say | What it does |
+This interactive setup configures your local vault path, project identity, and reporting scopes.
+
+---
+
+## Core Loop & Skills
+
+The daily workflow is simple: **Capture durable facts during development, then close progress at review milestones**.
+
+```text
+Agent Work
+  ├─> Wrap up / /tracework:capture (Evidence multiplier: checkpoint facts & decisions)
+  └─> Write Daily / Weekly / Monthly (Management-facing progress closure)
+```
+
+| Frequency / Role | What you say / Command | Purpose & Output |
 | :--- | :--- | :--- |
-| High | write daily / weekly / monthly | Management-facing progress closure |
-| High multiplier | wrap up / capture | Makes later reports better grounded |
+| **High Frequency** | `write daily` / `weekly` / `monthly`<br>`/tracework:daily` · `:weekly` · `:monthly` | Management-facing progress closure: what changed, why it matters, and the next gate. |
+| **Evidence Multiplier** | `wrap up` / `checkpoint`<br>`/tracework:capture` | Checkpoints session facts and architectural decisions, dynamically routed to `lite`, `standard`, or `deep`. |
+| **Optional Recovery** | `capture today`<br>`/tracework:capture day [date] [scope]` | Scans locally indexed session metadata after scope resolution to backfill evidence (transcripts never enter the vault). |
+| **Initial Setup** | `configure Tracework`<br>`/tracework:cold-start-interview` | One-time setup: configures local vault directory, project identity, and reporting scopes. |
 
-## Reporting Scopes
+### Skills Overview
 
-Each project can declare a reporting group:
+- **`/tracework:daily`**: What changed today, why it matters, and the next gate. Protects manual edits and returns safe drafts on conflict.
+- **`/tracework:weekly`**: Weekly management judgment. Outputs an executive brief by default, a quick summary on “what did we do this week”, or a PPT-ready Markdown Deck on explicit request.
+- **`/tracework:monthly`**: Raw-first phase outcomes, recurring systemic risks, and next-month closure targets. Reads directly from raw facts without requiring prior daily reports.
+- **`/tracework:capture`**: An adaptive session raw record (`lite`, `standard`, or `deep`).
+- **`/tracework:capture day [date] [scope]`**: Incrementally recovers evidence from indexed sessions after scope partitioning.
+- **`/tracework:cold-start-interview`**: Vault directory, project identity, and reporting group configuration.
+
+---
+
+## Key Capabilities & Principles
+
+### 1. Strict Workplace vs. Personal Partitioning
+
+Each project declares a reporting group in its config ([Configuration Guide](docs/configuration.md)):
 
 ```yaml
 profile:
   project_name: My Project
-  reporting_group: work   # or personal, open-source, consulting
+  reporting_group: work   # Options: work, personal, open-source, consulting
 ```
 
-Daily, Weekly, and Monthly partition scope before selecting the main story:
+Daily, Weekly, and Monthly reports enforce **partitioning before narrative synthesis**:
 
-- `work`: workplace projects only. Personal material must not appear in the
-  report body or evidence appendix.
-- `personal`: personal projects only.
-- `all`: a private combined view, with a separate judgment and headline set for
-  each group.
+- **`work`**: Workplace projects only. Personal material must never enter the report body or evidence appendix.
+- **`personal`**: Personal projects only.
+- **`all`**: A private combined view, maintaining an independent judgment and headline lane for each group.
 
-Weekly resolves goal sources within each group, then explains actual change,
-variance, and next commitments without a fixed headline count. The brief keeps
-information that changes management judgment; its appendix preserves full
-commitments, work coverage, and evidence.
+> **Scope Precedence**: Explicit parameter ➔ Configured default group ➔ Current project group. If none is resolved, Tracework falls back to a `local` conversation report of the current project. Unassigned projects never enter `work` or `personal`. Capture Day halts before reading sessions if scope is unresolved.
 
-Scope uses your explicit choice, then the configured default, then the current
-project’s group. If none is known, the report stays in the conversation as a
-`local` view of the current project. Unassigned projects cannot enter `work` or
-`personal`; run `/tracework:cold-start-interview` to assign a group. Capture Day
-stops before reading sessions when scope is unresolved.
+### 2. Goal Alignment & Evidence Chains
 
-## Skills
+Weekly reports resolve and align with original goals within each group before analyzing actual progress, variance, and time-grounded next steps, avoiding arbitrary headline quotas.
 
-| Command | Frequency | Output |
-| :--- | :--- | :--- |
-| `/tracework:daily` | High | What changed today, why it matters, and the next gate |
-| `/tracework:weekly` | High | Weekly management judgment; brief by default, quick review on “what did we do this week”, PPT outline only when requested |
-| `/tracework:monthly` | High | Raw-first phase outcomes, recurring risks, and next-month closure targets |
-| `/tracework:capture` | High multiplier | An adaptive lite/standard/deep session raw record |
-| `/tracework:capture day [date] [scope]` | Optional recovery | Incrementally recovered evidence from indexed sessions after scope partitioning |
-| `/tracework:cold-start-interview` | One-time upgrade | Vault, project identity, and reporting group |
+The brief body preserves information that shifts management judgment; full commitments and supporting citations move to the appendix. If underlying facts are missing, Tracework exposes the gap rather than inventing history.
 
-When explicitly asked for a `weekly PPT`, Tracework produces a standalone
-PPT-ready Markdown Deck with only the necessary pages. Unusual length triggers
-compression review rather than a fixed page limit. By default, it serves a
-same-department weekly meeting: work goals, this week's results or final choices,
-the shortest necessary rationale and evidence boundary, then next-week plans.
-Sources are reopened only for selected claims; the public appendix keeps a
-compact evidence map. The Markdown is readable on its own; a rendered `.pptx`
-is a separate visual translation.
+### 3. Presentation-Ready Decks (Weekly PPT)
 
-Reports preserve their evidence chain. A reader can drill
-from a report claim to raw entries, rejected alternatives, risks, and direct
-evidence. When the record is insufficient, Tracework should expose the gap
-instead of inventing history.
+When explicitly requested (`weekly PPT`, `周报 PPT`, or `presentation outline`), Tracework generates a standalone **PPT-ready Markdown Deck**:
 
-Tracework is not a meeting-notes tool, approval workflow, performance-packaging
-layer, employee-monitoring surface, or generic office suite. Activity counts,
-commit counts, and lines of code describe coverage; they do not prove outcomes.
+- **Audience Focus**: Tailored for same-department weekly meetings—linking original goals to this week's final choices, shortest necessary rationale, evidence boundaries, and next week's plan.
+- **Compression Review**: Excessive length triggers editorial compression review instead of an arbitrary slide count limit.
+- **Compact Appendix**: Sources are reopened only for selected claims, with a compact evidence map in the appendix. The Markdown file remains fully self-contained.
 
-## Updating Reports and Correcting Records
+### 4. Update Protection & Fact Correction
 
-Daily updates protect existing content by date and group; hand edits or
-concurrent changes return a draft while preserving the file. For a mistaken
-stored fact, ask Capture to correct the record and provide the original record
-and the correct fact. Corrections preserve original records and apply in the
-original work period; an explicit historical knowledge cutoff (as-of) uses only
-what was known then. Daily, Weekly, and Monthly share
-that corrected view. Existing reports change only when you request a refresh;
-once corrections exist, do not downgrade to readers that ignore them.
+- **Edit Protection**: Daily reports manage content blocks by date and group. If manual edits or concurrent changes are detected, Tracework preserves the file and returns a draft in the conversation. Partial project read failures also return annotated drafts, saved only on explicit request.
+- **Fact Correction**: If a stored fact is inaccurate, tell Capture to “**correct this record**” and provide the original claim alongside the verified fact. Corrections preserve the original record, apply to the target period, and support historical knowledge cutoffs (`as-of`). Daily, Weekly, and Monthly reports share this unified corrected view.
 
-## Storage
+---
 
-- Configuration: `~/.tracework/config.yaml` or `{project}/.tracework/config.yaml`
-- Raw entries: `{vault}/raw/weeks/{week}/{slug}.json`
-- Artifact dossiers: `{vault}/raw/artifacts/{slug}.json`
-- Human-readable outputs: `{vault}/Daily Note.md` and `{vault}/Work Diary/`
+## Storage & Privacy
 
-Raw entries remain semantic truth.
-Artifact dossiers preserve navigation and recorded boundaries without copying
-complete source documents.
+Tracework adheres strictly to **Local-First** principles ([Data Model](docs/data-model.md) and [Artifact Governance](docs/artifact-governance.md)):
 
-Capture Day is optional and disabled by default. When `session_scan.enabled: true`
-is set, the plugin hook stores only session pointers and the metadata needed for
-reporting groups under `~/.tracework/session-index/`. Only an explicit
-`/tracework:capture day` invocation reads that day's sessions after scope
-partitioning, and transcript content is never copied into the vault.
+- **Configuration**: `~/.tracework/config.yaml` or `{project}/.tracework/config.yaml`
+- **Raw Entries**: `{vault}/raw/weeks/{week}/{slug}.json` (Semantic source of truth)
+- **Artifact Dossiers**: `{vault}/raw/artifacts/{slug}.json` (Tracks navigation and boundary metadata without duplicating source documents)
+- **Human-Readable Outputs**: `{vault}/Daily Note.md` and `{vault}/Work Diary/`
+
+**Capture Day** is disabled by default. When `session_scan.enabled: true` is set, the plugin hook records only session pointers and grouping metadata under `~/.tracework/session-index/`. Local transcript parsing occurs only when explicitly invoking `/tracework:capture day`, and **transcript contents are never copied into the vault**.
+
+---
 
 ## Development
 
-`copy-skills` synchronizes canonical → skill-local → bundle using one static map.
-`check-skills` is read-only; CI rejects uncommitted generated differences.
+Canonical files are synced via a static map (`canonical → skill-local → bundle`), and `check-skills` performs read-only validation.
 
 ```bash
 npm --prefix cli run build
@@ -180,20 +164,19 @@ npm --prefix cli run test
 npm --prefix site run build
 ```
 
-Core documentation: [Configuration](docs/configuration.md),
-[Data model](docs/data-model.md), and
-[Artifact governance](docs/artifact-governance.md).
+Core documentation: [Configuration](docs/configuration.md) · [Data Model](docs/data-model.md) · [Artifact Governance](docs/artifact-governance.md).
+
+---
 
 ## Support
 
-If Tracework helps you turn agent work into clearer progress reports while
-preserving the evidence behind important decisions, you can support continued
-maintenance here:
+If Tracework helps turn your agent work into clearer, evidence-backed progress reports, support continued maintenance here:
 
-<https://kkenny0.github.io/support/>
+👉 <https://kkenny0.github.io/support/>
 
-Your support helps maintain reporting quality, cross-runtime plugin packaging,
-storage contracts, and documentation.
+Your support maintains reporting quality, cross-runtime packaging, storage contracts, and documentation.
+
+---
 
 ## License
 
