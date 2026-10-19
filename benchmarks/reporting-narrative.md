@@ -32,6 +32,45 @@ Record model, repo SHA, scope, output path, pass/fail, and short failure excerpt
 Keep private raw data and generated comparisons in ignored local eval folders or
 temporary storage; do not commit them.
 
+## Slides Readability Evaluation
+
+Weekly slides add a second axis: the same evidence must serve a live audience
+and a PPT maker. Evaluate readability only after source consistency.
+
+Freeze the inputs before comparing rule versions: scoped sources, the task
+wording, the complete skill context (analysis contract, slides contract, slide
+template, shared narrative contract), model, effort level, and run flags.
+Before/after comparisons reuse the identical configuration; a changed model or
+prompt starts a new comparison rather than extending old scores.
+
+- **Source consistency first.** The candidate must not widen states (proposed to
+  confirmed, recorded to verified), drop material conditions beside claims, or
+  add commitments, dates, owners, or dependencies absent from sources.
+- **Blind read.** A same-department reader states, per lane: what changed, why
+  it matters, the current scope, and the remaining gate—without the sources.
+  Blind reads cannot prove factual accuracy; review the candidates against
+  sources separately.
+- **Maker handoff.** A fresh maker can lay out the deck without vault research,
+  semantic invention, or re-deciding the argument split.
+- **Examples and visuals.** Every worked example is internally derivable from
+  its stated inputs; illustrative-only examples are marked. Brevity is not the
+  only metric—an explanation that stops short of its mechanism fails the same
+  review as one that buries the change in audit detail.
+- **Coverage.** Use the fewest cases that exercise the risks: an explicit
+  technical-review request, a period with no confirmed plan, insufficient
+  evidence, multiple independent lanes, and one simple single-item advance.
+- **Debug versus held-out.** Cases used to tune the rules are debug samples.
+  After the rules freeze, run at least one complete case that did not
+  participate; if that case later influences the rules, stop calling it
+  held-out.
+- **Honest bookkeeping.** Keep full generations including failures and invalid
+  attempts; separate review originals from candidates; a manual rewrite
+  validates direction only and is never an automatic-generation pass.
+
+Keep private sources, generated decks, and review artifacts under ignored local
+eval folders; never overwrite earlier evaluations, and write nothing to the
+vault beyond explicitly approved candidate reports.
+
 Before assigning an overall preference, follow
 [Report Grounding Review](report-grounding-review.md): calibrate with incorrect
 statements and correct controls, inspect complete outputs, and keep grounding

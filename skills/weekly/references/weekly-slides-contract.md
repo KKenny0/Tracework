@@ -37,8 +37,11 @@ When framing is absent, use this product default:
   know material boundaries or collaboration needs, and see the next-week plan.
 
 Explicit manager, leadership, async-read, or technical-review wording overrides
-the default. Ask at most one combined question only when unresolved ambiguity
-would materially change result selection, grouping, or the requested action.
+the default. A technical-review occasion may admit deeper mechanism and
+provenance in slide bodies without relaxing source-truth rules or the
+change-first selection below. Ask at most one combined question only when
+unresolved ambiguity would materially change result selection, grouping, or
+the requested action.
 Never use `reporting_group` alone as the audience definition, and do not mix
 distinct audience roles in one deck.
 
@@ -47,11 +50,16 @@ distinct audience roles in one deck.
 **Slides only.** Select a result only when removing it would change the primary
 audience's understanding, action, or confidence. Implementation inventory,
 secondary work streams, provenance, and details useful only for technical
-follow-up go to speaker notes or appendix.
+follow-up go to speaker notes or internal records.
 
 Do not admit a result merely because it is effortful, complete, technically
 interesting, or present in Weekly Analysis. The main deck answers the
-communication job; the appendix preserves accountability.
+communication job; accountability stays in internal records and raw sources.
+
+Select what changed this period first; add background only as far as needed to
+understand that change. Do not turn the deck into a teaching tour of the
+system, and do not give a module, field, or test category a page merely
+because it exists.
 
 For one selected goal lane, build one local thesis before page writing:
 
@@ -75,11 +83,11 @@ reporting group, audience, week, technology, or generic wording such as
 “improve quality” is not common-goal evidence.
 
 Start a multi-goal deck with one weekly goal map. For every selected lane, the
-map states its Why, weekly result, current status, and most important remaining
-boundary. It must contain judgment, not merely names or an agenda. Then keep
-each lane's local narrative contiguous and use only that lane's goal source and
-result evidence. A lane that does not change audience understanding, action, or
-confidence stays in portfolio or appendix. These groups remain internal
+map states its weekly result, current status, and most important remaining
+boundary; each lane's Why sits in the map or its first page.
+It must contain judgment, not merely names or an agenda. Keep each lane's
+narrative contiguous, using only that lane's goal source and result evidence. A lane that does not change audience understanding, action, or
+confidence stays in portfolio. These groups remain internal
 authoring logic rather than public Story/Why/Goal fields.
 
 ## Cognitive Task Decomposition
@@ -103,9 +111,8 @@ Then identify only the roles needed to test independence:
 For each temporary task, record an internal `supported_claim`, its evidence
 boundary, likely source locators, the facts or relationship that prove it, and
 the prior understanding it needs. Discard tasks that do not advance the Deck
-Thesis. A retained `supported_claim` should become the public slide title or be
-combined into another title; do not make the audience infer the conclusion from
-a topic label.
+Thesis. A retained `supported_claim` becomes the public slide title or combines
+into another; do not make the audience infer the conclusion from a topic label.
 
 ## Selected-source Reopen
 
@@ -121,8 +128,8 @@ an internal Source Grounding Packet containing:
 - the evidence boundary;
 - unverified statements that must not be presented as fact.
 
-Do not expose full packets per page. Preserve only compact claim-to-source
-mapping in the final Evidence Appendix.
+Do not expose full packets per page; emit no Evidence Appendix, and keep
+claim-to-source mapping internal or in speaker notes.
 
 ### Recover material grounding once, not source by source
 
@@ -140,7 +147,7 @@ missing sources that satisfy all of these conditions:
 Ask the user once for all such gaps. For each one, name the affected claim, the
 missing grounding, the consequence of skipping it, and acceptable forms such as
 a repository path plus commit id, local document, durable document URL, export,
-or screenshot. Do not interrupt for appendix completeness or optional detail.
+or screenshot. Do not interrupt for provenance completeness or optional detail.
 
 Treat supplied material by its actual responsibility: repository plus commit
 and a qualified snapshot can establish committed structure; an accessible
@@ -203,18 +210,19 @@ Convert selected grounded material directly into presentation content:
 - facts and contradictions the audience must see;
 - actual objects and relationships;
 - observed numbers with sample and boundary;
-- main path, material branch, fallback, input, output, and invariant;
+- mechanism detail—main path, material branch, fallback, input, output,
+  invariant—only as far as the audience needs it to follow the
+  change, choice, or risk on this page;
 - Before/After, Mermaid, Markdown tables, quote blocks, or concise prose;
-- remaining risks, decisions, and pass/fail gates.
+- remaining risks and decisions, with recorded pass/fail gates.
 
 Do not expose full candidate, constraint, or rejected-alternative inventories by
 default. Keep that evidence local unless the current audience must compare or
 choose among those paths.
 
-Assign every retained evidence item one responsibility: for example,
-architecture establishes structure, a test establishes exercised behavior, an
-eval establishes observed effect within its sample, and a design artifact
-establishes target intent. One page may combine several proof objects when they
+Assign every retained evidence item one responsibility: architecture
+establishes structure, tests establish exercised behavior, evals observed
+effect within their sample, design artifacts target intent. One page may combine several proof objects when they
 jointly support one claim. Spatial adjacency must not imply that one evidence
 type proves another.
 
@@ -242,14 +250,17 @@ representation that makes a supported relationship easier to see:
 | formula as the irreducible relation | one minimal formula plus a plain-language translation |
 | two or three sentences already suffice | text only |
 
-In Markdown, use fenced `text` for ASCII and keep it within 80 characters.
-Diagrams are optional and never appear as the first body block: state the
-audience-facing concept before the fence. Every node, edge, value, and label
-must be traceable to the grounded packet; put its evidence boundary immediately
-after the visual.
+Use fenced `text` for ASCII within 80 characters; diagrams are optional and
+never the first body block—state the concept first. Every node, edge, value,
+and label must be traceable to the grounded packet, with its evidence boundary
+immediately after the visual.
 A reader seeing only the visual should recover the relevant relationship and
 boundary without inferring a stronger result. If the visual only reformats the
 summary, remove it.
+
+When the grounded shape clearly implies one primary representation, use it
+directly (table, tree, trace, image pair); the maker keeps that form. When no
+shape dominates, the maker chooses the visual translation.
 
 ### Page independence and merge or split
 
@@ -259,9 +270,9 @@ cannot be deleted without changing the audience's decision, understanding, or
 confidence.
 
 Prefer one page. Split `design_rationale` from `mechanism` only when both
-pages serve the same local goal narrative, use different source material and cognitive
-tasks, and the mechanism depends on the facts, constraints, and trade-offs
-presented first. The first page directly presents the design problem and
+pages serve the same local goal narrative, use different source material and
+cognitive tasks, and the mechanism depends on the facts and trade-offs presented
+first. The first page directly presents the design problem and
 choice; the second directly presents operation, branch or fallback, and
 unchanged boundary.
 
@@ -291,31 +302,30 @@ triggers deletion and compression review. A result may use zero, one, two, or—
 only when independent validation changes understanding or action—three slides.
 
 Public content consists of a compact deck framing line, audience-facing slide
-content, optional speaker notes, and a compact Evidence Appendix. Internal
+content, and optional speaker notes. Internal
 semantic groups, cognitive roles, source packets, visual feasibility,
 merge/split analysis, unsupported-claim ledgers, and production guidance remain
 hidden.
 
+Give each layer one responsibility: the slide body carries the conclusion, the
+evidence the audience must see, and limits that would mislead if removed;
+speaker notes carry presenter supplements and source hints; sources and
+reconciliation stay internal; not every fact must enter the body.
+
 For the default same-department weekly meeting, end with one next-week plan page
-that distinguishes confirmed commitments from proposals and gives each item a
-pass/fail closure criterion. Group items by selected goal lane when the deck is
-multi-goal. Do not fabricate a plan; mark missing ownership or an unresolved
-target explicitly. A goal lane must not appear for the first time on this page.
+that distinguishes confirmed commitments from proposals. Use only recorded
+dates, owners, and closure criteria; a missing criterion, owner, or date is
+shown explicitly, never invented; an unresolved target stays marked; undated
+items stay undated. Group items by lane in a multi-goal deck; a lane must not
+first appear on this page.
 
-Run these preflights:
+Run the preflights in `slide-template.md`, including whole-deck integrity: no
+repetition that adds no understanding, action, or confidence; state words name
+object, confirmer, scope; worked examples internally derivable; illustrative-
+only examples marked.
 
-1. audience outcome: a fresh member of the primary audience can state every
-   selected goal lane, its local conclusion and confidence boundary, and the
-   required decision or action after a short read;
-2. claim-to-proof: each title states a supported claim and its body visibly
-   proves that wording without unsupported certainty;
-3. standalone reading: a reader can explain the cumulative argument, facts,
-   relations, values, risks, and next gate without a PPT;
-4. blind content handoff: a maker can visually translate the Markdown without
-   vault research, semantic invention, or a new split decision.
-
-Run at most one bounded repair using the current admission view, reopened
-sources, validator feedback, and draft. If material lanes remain missing or the
+Run at most one bounded repair using the admission view, reopened sources,
+validator feedback, and draft. If material lanes remain missing or the
 body still consists of implementation inventory instead of presentation
 semantics, return a non-slide result headed `PPT Mode 未通过`. Name one of
 `evidence insufficient`, `contract validation failed`, or `model capability
@@ -330,18 +340,18 @@ PPTX as the visual source. Use an existing presentation capability when the
 runtime provides one; otherwise stop at Markdown and state the capability
 boundary.
 
-- Inspect every source slide before mapping content.
-- Map every output slide to a real source slide, duplicate it, and edit inherited
-  elements rather than rebuilding its style.
-- Preserve master, layout, typography, spacing, and native editability.
+- Inspect every source slide; map each output slide to a real one, duplicate
+  it, edit inherited elements rather than rebuilding its style, and preserve
+  master, layout, typography, spacing, and native editability.
 - If copy does not fit, shorten, remap, or split. Do not shrink or flatten it.
 - Render and inspect every final page; verify template fidelity and overflow.
 - Write a versioned copy and preserve its predecessor.
+- Carry the deck's speaker notes into the PPTX notes pane and spot-check them
+  at delivery.
 - Apply one evidence or user-comment revision to affected claims and dependent
-  pages without re-deciding unrelated pages. Preserve stable page ids where the
-  cognitive job survives; add, remove, or reorder pages only when changed
-  evidence changes the necessary claim sequence. Formatting-only differences do
-  not count as a revision.
+  pages without re-deciding unrelated pages. Keep stable page ids where the
+  cognitive job survives; reorder pages only when changed evidence changes the
+  claim sequence. Formatting-only differences are not a revision.
 
 Do not add a renderer, a closed style gallery, a persistent template registry,
 or a custom history database to Tracework. A template path is an explicit run
@@ -350,68 +360,50 @@ input and versioned files provide rollback.
 
 ## Deck Workflow
 
-Skip this entire step for `quick` and `brief`. Run it only for `slides`.
+Skip for `quick` and `brief`. Run only for `slides`:
 
 ```text
-Coverage
-→ Result Selection
-→ Selected-source Reopen
+Coverage → Result Selection → Selected-source Reopen
 → Source Grounding Recovery when a necessary page remains unsupported
 → Final Deck
 ```
 
-Apply the complete slides path in this reference. In short:
-
 1. Resolve framing before ranking; default to the same-department weekly meeting.
-2. Build one local narrative per selected lane. A single lane starts directly;
-   multiple lanes use one grounded goal map and contiguous lane pages.
-3. Reopen sources only for selected results and state each evidence item's proof
-   responsibility. Start from the selected raw locators, then open only the
-   commit, snapshot, code, eval, or document needed by the retained claim.
-   Complementary proof objects may share one page.
-4. If a necessary page still lacks exact architecture, design mechanics, or a
-   decision-changing fact, ask once for all material missing sources. State the
-   affected claim, what is missing, what source forms would resolve it, and how
-   the page will degrade if the user skips. Do not ask for appendix-only detail.
-5. Use Cognitive Task Decomposition only to diagnose a complex split. Keep full
-   alternatives local unless the audience must choose now.
-6. Form semantic compositions before template-native pagination. Delete or merge
-   pages that do not change understanding, action, or confidence; review unusual
-   length semantically rather than enforce a numeric cap.
-7. End with confirmed/proposed next-week closure, grouped by selected goal lane.
+2. Build one local narrative per selected lane; multiple lanes start from one
+   grounded goal map and keep lane pages contiguous.
+3. Reopen only selected sources; give each evidence item a proof
+   responsibility; complementary proof objects may share one page.
+4. Ask once for all still-missing material sources before degrading or merging
+   a necessary page; never ask for provenance-only detail.
+5. Use Cognitive Task Decomposition only to diagnose a complex split.
+6. Delete or merge pages that do not change understanding, action, or
+   confidence; unusual length gets semantic review, not a numeric cap.
+7. End with confirmed/proposed next-week closure, grouped by lane.
 
-If data is missing, incomparable, or contradictory, do not invent a chart.
-Use a mechanism or state-change diagram, lower the evidence boundary, expose
-the measurement gap, and name its closure criterion.
-
-If one bounded repair still cannot preserve material goal lanes or produce
-audience-facing semantic compositions, do not emit numbered slides. Return
-`PPT Mode 未通过`, classify the failure as `evidence insufficient`, `contract
-validation failed`, or `model capability insufficient`, and preserve a compact
-recovery pack of candidate lanes, usable facts, boundaries, and next options.
-Do not silently switch models or modes.
-
-For an explicitly requested template-native PPTX, follow the optional contract
-in both slide references. Reuse runtime capability; do not build a renderer.
+If data is missing, incomparable, or contradictory, do not invent a chart:
+use a mechanism or state-change view, lower the evidence boundary, expose the
+measurement gap, and name its recorded closure criterion when one exists. The
+bounded-repair and failure rules above apply as written; a template-native
+PPTX follows the optional contract above with no new renderer.
 
 
 ## Slides Quality Gate
 
-- Resolve one audience and outcome before selection. Absent framing defaults to
-  same-department colleagues, no invented duration, and next-week closure.
-- State each selected goal and bounded conclusion; unrelated goals stay independent.
-- No single-goal overview; a multi-goal Slide 1 maps Why, result, status, and boundary.
-- Keep cognitive roles internal and on demand. Split complex results only for
-  independent evidence and prerequisite claims; keep simple results merged.
-- Give every diagram, number, test, trace, or design artifact a distinct proof
-  responsibility; never use implementation structure as effect evidence.
-- Emit only necessary slides. Zero candidates produce an empty state; unusual
-  length receives deletion/compression review rather than a numeric cap.
-- A target reader and a PPT maker can use the Markdown without vault research,
-  semantic invention, or production instructions.
-- Keep charts comparable, truth states separate, and ordinary main slides free
-  of provenance detail unless technical review explicitly needs it.
-- Template-native PPTX remains editable, rendered, versioned, and revision-safe.
+- One audience and outcome before selection; absent framing defaults to
+  same-department colleagues, no invented duration, next-week closure.
+- Multi-goal decks open with the grounded goal map; unrelated goals stay
+  independent; no single-goal overview page.
+- Cognitive roles stay internal and on demand; split only for independent
+  evidence and prerequisite claims.
+- Every diagram, number, test, trace, or design artifact keeps one proof
+  responsibility; implementation structure is never effect evidence.
+- Emit only necessary slides; zero candidates produce an empty state; unusual
+  length gets deletion/compression review, not a numeric cap.
+- Reader and maker use the Markdown without vault research, semantic
+  invention, or production instructions.
+- Charts stay comparable with units and sample context; truth states separate;
+  provenance out of ordinary main slides unless technical review needs it.
+- Template-native PPTX stays editable, rendered, versioned, revision-safe.
 
 
 ## Slides Anti-Patterns
@@ -423,24 +415,28 @@ in both slide references. Reuse runtime capability; do not build a renderer.
 - A full candidate, constraint, or rejected-alternative inventory when the
   audience only needs the final choice and its shortest rationale.
 - A public Storyboard or Production Brief beside the public Markdown Deck.
+- A public Evidence Appendix, coverage ledger, or claim-to-source table in the
+  deck.
 - `Audience takeaway`, `Recommended visual form`, `Page composition`,
   `On-slide copy`, `Production constraints`, or page-level Source Grounding
   Packet sections in the public deck.
 - Public Story, Why/Goal field, or cognitive-role scaffolding that the audience
   would not expect to see in the actual presentation.
-- Topic, question, process, or object-only titles that hide the supported claim.
+- Topic, question, process, or object-only titles that hide the supported
+  claim (for example `方案怎么跑通`).
 - A design slide that only supplies background, history, or option inventory.
 - A mechanism slide that is only a module, field, code, or step list.
-- Two slides that do not perform independent cognitive work.
-- Content that makes the reader or PPT maker reopen the vault to discover the
+- Two slides that do not perform independent cognitive work, or a detail slide
+  whose removal changes neither thesis nor audience decision.
+- Content that makes the reader or maker reopen the vault to discover the
   actual claim, node, relationship, number, or risk.
 - Layout, typography, color, card, or diagram-production instructions.
-- A detail slide whose removal changes neither thesis nor audience decision.
-- Topic-only slide titles such as `结果弧线一`, `方案怎么跑通`, or
-  `工作组合状态`.
-- Charts without comparable evidence, units, or sample context.
 - Decorative architecture diagrams with only component names and arrows.
 - Ungrounded, wrong-cutoff, target-as-current, or prose-reformatting diagrams.
 - Using a solution-logic diagram as proof of effectiveness.
 - Bundled style galleries, flattened slides, or a custom version database when
-  a user-owned template and versioned files already solve the need.
+  user templates and versioned files already suffice.
+- Repeating the same audit-style disclaimer on page after page instead of
+  scoping each claim once, beside the claim it qualifies.
+- State words such as closed, accepted, or passed without naming the object,
+  the confirmer, and the scope of the confirmation.
