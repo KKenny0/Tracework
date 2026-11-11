@@ -10,7 +10,11 @@ Before drafting session-end, checkpoint, or Capture Day entries:
    Without a vault, skip history lookup and use the fallback in step 4.
    With a vault, resolve the slug with `tracework_raw.py project-slug
    --cwd <project-root>`. For Capture Day, use each selected project's root,
-   not the launch directory.
+   not the launch directory. Confirm this project's assigned `reporting_group`
+   from its own project config or its matching project-registry entry; a global
+   `default_reporting_group` is a report preference, not project ownership.
+   Capture Day can use the project group returned by session classification.
+   If ownership is unassigned or ambiguous, use step 4 rather than widening scope.
 2. With a vault, read that project's effective entries for the 28 calendar days
    ending on the capture target date (inclusive; start = target minus 27 days).
    For historical recovery, use the requested work date, not today's date:
@@ -19,10 +23,12 @@ Before drafting session-end, checkpoint, or Capture Day entries:
    python <this-skill>/scripts/tracework_raw.py read-report \
      --cwd <project-root> --report weekly \
      --start <target-minus-27-days> --end <target-date> \
-     --project-slug <resolved-slug>
+     --project-slug <resolved-slug> --scope <confirmed-project-group>
    ```
 
-   Pass `--scope <resolved-group>` for an explicitly scoped Capture Day run.
+   Use the confirmed project group for every capture mode, even when the
+   default reporting group differs. Capture Day must also respect the user's
+   selected scan scope; a project excluded there is not eligible for this read.
    `weekly` selects the existing read interface; it does not generate a report
    or apply Daily's repo filter. Use only the selected project's `view.entries`
    under `groups`, not correction history or superseded raw records. These are
@@ -39,8 +45,7 @@ Before drafting session-end, checkpoint, or Capture Day entries:
 4. No vault or no matching history: continue from supported session facts.
    A blocked/partial/failed read, excluded project, or null view is not empty
    history; state that continuity could not be checked and use only supported
-   grouping, leaving it absent if
-   uncertain. Never guess a group to satisfy a field requirement. Do not widen
+   grouping, leaving it absent if uncertain. Never guess a group to satisfy a field requirement. Do not widen
    scope, register projects, write history, or advance watermarks for this read.
 
 This bounded lookup does not prove a term or stream never existed earlier.

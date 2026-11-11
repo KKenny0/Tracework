@@ -1558,7 +1558,7 @@
               "content": "Local repair retains validation ownership; the retry budget is the only condition that opens the orchestration fallback.\\n\\n```mermaid\\nflowchart LR\\n  Validate[validate] --> Repair[repair locally]\\n  Repair --> Validate\\n  Repair -->|budget exhausted| Fallback[orchestration fallback]\\n```\\n\\nThe retry budget controls the branch; ownership remains in validation."
             }
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "Upstream repair exposes validation internals.", "source": "design:tradeoffs", "boundary": "Design comparison, not measured latency.", "slide_ids": ["repair-ownership"], "source_refs": ["design:tradeoffs"], "proof_responsibility": "design_choice"},
             {"claim": "Exhausted local retries enter fallback.", "source": "mechanism:fallback", "boundary": "Path semantics, not fallback frequency.", "slide_ids": ["repair-path"], "source_refs": ["mechanism:fallback"], "proof_responsibility": "mechanism"}
           ]
@@ -1596,7 +1596,7 @@
             "title": "One explicit owner removes ambiguity without changing downstream work",
             "content": "Before, two owners shared one handoff; after, one explicit owner preserves the same downstream interface.\\n\\n```mermaid\\nflowchart LR\\n  A[owner A] -. ambiguous .-> Downstream[downstream]\\n  B[owner B] -. ambiguous .-> Downstream\\n  C[one explicit owner] --> DownstreamAfter[downstream interface stays unchanged]\\n```\\n\\nBefore: two owners. After: one explicit owner."
           }],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "The explicit owner preserves the downstream interface.", "source": "simple:mechanism-path", "boundary": "Contract preservation, not measured speed."}
           ]
         }
@@ -1632,7 +1632,7 @@
             "title": "Normal, force, and recovery now share one per-episode DAG",
             "content": "Normal, force, and partial recovery now converge before one per-episode DAG, so entry differences no longer create separate execution semantics.\\n\\n```mermaid\\nflowchart LR\\n  normal --> Selection[selected stages]\\n  force --> Selection\\n  recovery[partial recovery] --> Selection\\n  Selection --> DAG[per-episode DAG]\\n  DAG --> Result[episode artifacts and final result]\\n```\\n\\nUnchanged: force API, result contract, rolling metadata."
           }],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "All entries converge before the per-episode DAG.", "source": "mechanism:unified-path", "boundary": "Execution semantics, not production acceptance."}
           ]
         }
@@ -1668,7 +1668,7 @@
             "title": "Sonnet shows a visual-detection advantage, but manual review still gates adoption",
             "content": "Same 88 shots and prompt:\\n\\n| Model group | Total hits | Visual dimensions |\\n|---|---:|---:|\\n| Other providers | 5–11 | 0–1 |\\n| Sonnet | Sonnet 28 | visual dimensions 7 |\\n\\nHit count is not accuracy; cost and over-judgment still require manual review."
           }],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "Sonnet produced 28 total and 7 visual-dimension hits.", "source": "eval:model-comparison", "boundary": "Observed hits, not precision or approval."}
           ]
         }
@@ -1708,7 +1708,7 @@
             {"id": "dag-semantics", "title": "One episode-level DAG now keeps batch and recovery semantics aligned", "content": "Every entry converges on a single DAG at episode granularity, removing the batch and episode divergence. Historical batch cache may produce a first-run cache miss; force can bypass it."},
             {"id": "baseline-reuse", "title": "Locked baselines preserve stable scene fields, but acceptance remains open", "content": "Each location cluster receives the locked baseline. Stable fields are reused; change enters variant and anchors. An end-to-end rerun must confirm ep7/ep8 consistency."}
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "Single DAG preserves episode semantics.", "source": "runtime:dag", "boundary": "Mechanism complete, cache gate open."},
             {"claim": "Location clusters receive locked baselines.", "source": "scene:cluster", "boundary": "Implementation recorded, end-to-end acceptance open."}
           ]
@@ -1731,7 +1731,7 @@
           ["当前实现", "SchedulerState", "phase helpers", "tested behavior", "不证明质量提升"],
           ["目标设计", "Editor Intent Compiler", "Quality Gate", "尚未实现"]
         ],
-        "required_appendix_source_terms": [
+        "required_internal_source_terms": [
           "commit <qualified-commit>",
           "<resolved-repository>",
           "captured repository snapshot",
@@ -1763,7 +1763,7 @@
               "content": "目标设计是在现有 generation 前后增加两个受控能力，不替换现有 DAG；Phase 1–5 尚未实现。\n\n```mermaid\nflowchart LR\n  Notes[editor notes] --> Compiler[Editor Intent Compiler]\n  Compiler --> Generation[existing generation]\n  Generation --> Gate[Quality Gate]\n  Gate --> Output[validated output]\n```\n\n该图表达 design target，不是当前代码拓扑。"
             }
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {
               "claim": "Scheduler extraction exists in the current weekly snapshot.",
               "source": "commit <qualified-commit> @ <resolved-repository>; captured repository snapshot at or before 2026-07-31",
@@ -1820,7 +1820,7 @@
               "content": "此前 `${VAR}` 未解析时会保留为普通字符串，形成静默失败，错误直到 provider 调用才暴露。现在配置加载阶段直接给出启动时告警；运行路径和输出契约没有变化。"
             }
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {
               "claim": "Unresolved placeholders emit a loader warning.",
               "source": "raw:config-warning; test:config-placeholder",
@@ -1948,7 +1948,7 @@
               "closure_criterion": "样本定义和基线确认后再形成质量结论"
             }
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {
               "claim": "本周目标是让召回结果可复现。",
               "source": "raw:retrieval-goal",
@@ -2075,7 +2075,7 @@
           "forced-common-goal",
           "overview-missing-second-lane",
           "second-lane-plan-only",
-          "second-lane-appendix-only",
+          "second-lane-internal-only",
           "cross-lane-source",
           "overview-without-why",
           "unsupported-overview-claim",
@@ -2147,7 +2147,7 @@
               "closure_criterion": "Foundation 0 独立提交并完成 smoke，shadow 的结构与路由正确"
             }
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "分镜质量目标是让问题可定位和验证。", "source": "raw:quality-objective", "boundary": "只记录质量目标。", "slide_ids": ["weekly-goal-map"], "source_refs": ["raw:quality-objective"], "proof_responsibility": "recorded_intent"},
             {"claim": "分镜质量职责边界已经收敛。", "source": "raw:quality-boundary", "boundary": "支持本周结果，不支持质量收益。", "slide_ids": ["weekly-goal-map"], "source_refs": ["raw:quality-boundary"], "proof_responsibility": "design_boundary"},
             {"claim": "routing 10 集为 117 → 115。", "source": "eval:quality-10", "boundary": "支持当前状态，样本小且高方差。", "slide_ids": ["weekly-goal-map"], "source_refs": ["eval:quality-10"], "proof_responsibility": "observed_effect"},
@@ -2208,7 +2208,7 @@
             {"id": "boundary-8", "title": "生产接纳仍由真实流量验证决定", "content": "上线接受门尚未关闭，不能把实现完成写成生产接纳。"},
             {"id": "boundary-9", "title": "下一步用扩样本关闭剩余质量风险", "content": "扩样本后按预先声明的通过标准决定是否进入主线。"}
           ],
-          "evidence_appendix": [
+          "internal_evidence": [
             {"claim": "入口契约保持不变。", "source": "fixture:dense-boundary-1", "boundary": "仅支持入口兼容边界。", "slide_ids": ["boundary-1"], "source_refs": ["fixture:dense-boundary-1"], "proof_responsibility": "interface_boundary"},
             {"claim": "调度状态集中管理。", "source": "fixture:dense-boundary-2", "boundary": "仅支持状态所有权。", "slide_ids": ["boundary-2"], "source_refs": ["fixture:dense-boundary-2"], "proof_responsibility": "state_ownership"},
             {"claim": "依赖按请求粒度等待。", "source": "fixture:dense-boundary-3", "boundary": "仅支持依赖等待语义。", "slide_ids": ["boundary-3"], "source_refs": ["fixture:dense-boundary-3"], "proof_responsibility": "dependency_semantics"},
@@ -2297,7 +2297,7 @@
           "unclassified-common-slide",
           "duplicate-classification",
           "nonexistent-classification",
-          "stale-evidence-appendix"
+          "stale-internal-evidence"
         ],
         "candidate_outputs": [
           {
@@ -2332,7 +2332,7 @@
                 "content": "Go：扩大到至少 30 集或第二个 series 后，整体错误稳定下降且改善集明显多于劣化集。\\n\\nNo-go：净变化仍接近零、高方差，或劣化集中在关键模式；届时回滚或重设方案。"
               }
             ],
-            "evidence_appendix": [
+            "internal_evidence": [
               {"claim": "可靠性修复已通过验收。", "source": "raw:2026-07-30T11:18:07+08:00", "boundary": "证明机制完成，不证明质量收益。", "slide_ids": ["routing-thesis"]},
               {"claim": "10 集错误 117→115，5 集改善、5 集劣化。", "source": "raw:2026-07-30T16:01:55+08:00", "boundary": "10 集小样本、高方差。", "slide_ids": ["routing-thesis", "routing-evidence", "routing-gate"]}
             ]
@@ -2370,7 +2370,7 @@
                 "content": "Go：补齐单轮 cleanup 的 10 集归因，扩大到至少 30 集或第二个 series，确认降错稳定且关键集不回归。\\n\\nNo-go：收益无法复现、尖峰持续，或 wrong_shot_size 仍无改善；届时停止叠加 prompt 清理并转向镜头实现侧专项。"
               }
             ],
-            "evidence_appendix": [
+            "internal_evidence": [
               {"claim": "Routing 的 10 集结果仍为 117→115。", "source": "raw:2026-07-30T16:01:55+08:00", "boundary": "小样本、高方差。", "slide_ids": ["routing-thesis", "routing-evidence"]},
               {"claim": "Cleanup v2 约降错 13%，但只改善动作过多。", "source": "raw:2026-07-31T17:59:59+08:00", "boundary": "两轮 cleanup 叠加，独立归因未完成。", "slide_ids": ["routing-thesis", "routing-evidence", "routing-gate"]}
             ]
@@ -2423,7 +2423,7 @@
                 "content": "当前样本不足，因此旧决策门仍然阻止切换。"
               }
             ],
-            "evidence_appendix": [
+            "internal_evidence": [
               {"claim": "下游接口保持不变。", "source": "contract:stable", "boundary": "接口证据，不证明决策门永久有效。"}
             ]
           },
@@ -2455,7 +2455,7 @@
                 "content": "New evidence 已关闭旧门槛，并让 replacement path 成为当前可执行选择。"
               }
             ],
-            "evidence_appendix": [
+            "internal_evidence": [
               {"claim": "下游接口保持不变。", "source": "contract:stable", "boundary": "接口证据。"},
               {"claim": "新证据替代旧门槛。", "source": "eval:new-evidence", "boundary": "只支持当前替代决策。"}
             ]

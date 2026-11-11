@@ -440,6 +440,10 @@ export function validateWeeklyBriefCompressionContract(fixture) {
 }
 
 const FORBIDDEN_DECK_FIELDS = [
+  'evidence_appendix',
+  'evidence appendix',
+  '证据附录',
+  'internal_evidence',
   'audience takeaway',
   'recommended visual form',
   'page composition',
@@ -472,7 +476,8 @@ function validatePptReadyMarkdownOutput(fixture, output) {
   const config = fixture.fixture || {};
   const audience = output.audience_contract || {};
   const slides = Array.isArray(output.slides) ? output.slides : [];
-  const publicText = JSON.stringify(output).toLowerCase();
+  const { internal_evidence, ...publicOutput } = output;
+  const publicText = JSON.stringify(publicOutput).toLowerCase();
   for (const field of FORBIDDEN_DECK_FIELDS) {
     assert(!publicText.includes(field), `${fixture.id}: public deck leaks ${field}`);
   }
@@ -569,27 +574,27 @@ function validatePptReadyMarkdownOutput(fixture, output) {
     }
   }
 
-  const appendix = Array.isArray(output.evidence_appendix) ? output.evidence_appendix : [];
-  assert(appendix.length > 0, `${fixture.id}: compact evidence appendix is missing`);
+  const evidenceMap = Array.isArray(output.internal_evidence) ? output.internal_evidence : [];
+  assert(evidenceMap.length > 0, `${fixture.id}: internal evidence map is missing`);
   const availableSourceRefs = new Set(config.available_source_refs || []);
   assert(availableSourceRefs.size > 0, `${fixture.id}: source allowlist is missing`);
-  for (const item of appendix) {
-    assert(nonEmptyString(item.claim), `${fixture.id}: appendix claim is missing`);
-    assert(nonEmptyString(item.source), `${fixture.id}: appendix source is missing`);
-    assert(nonEmptyString(item.boundary), `${fixture.id}: appendix boundary is missing`);
-    const publicSourceRefs = item.source.split(';').map(value => value.trim()).filter(Boolean);
+  for (const item of evidenceMap) {
+    assert(nonEmptyString(item.claim), `${fixture.id}: evidence map claim is missing`);
+    assert(nonEmptyString(item.source), `${fixture.id}: evidence map source is missing`);
+    assert(nonEmptyString(item.boundary), `${fixture.id}: evidence map boundary is missing`);
+    const mappedSourceRefs = item.source.split(';').map(value => value.trim()).filter(Boolean);
     if (availableSourceRefs.size > 0) {
-      for (const sourceRef of publicSourceRefs) {
-        assert(availableSourceRefs.has(sourceRef), `${fixture.id}: appendix exposes unavailable source ${sourceRef}`);
+      for (const sourceRef of mappedSourceRefs) {
+        assert(availableSourceRefs.has(sourceRef), `${fixture.id}: evidence map uses unavailable source ${sourceRef}`);
       }
     }
     if (config.require_claim_source_coverage) {
-      assert(nonEmptyStringArray(item.slide_ids), `${fixture.id}: appendix slide mapping is missing`);
-      assert(nonEmptyString(item.proof_responsibility), `${fixture.id}: appendix proof responsibility is missing`);
-      assert(nonEmptyStringArray(item.source_refs), `${fixture.id}: appendix source refs are missing`);
+      assert(nonEmptyStringArray(item.slide_ids), `${fixture.id}: evidence map slide mapping is missing`);
+      assert(nonEmptyString(item.proof_responsibility), `${fixture.id}: evidence map proof responsibility is missing`);
+      assert(nonEmptyStringArray(item.source_refs), `${fixture.id}: evidence map source refs are missing`);
       for (const sourceRef of item.source_refs) {
-        assert(availableSourceRefs.has(sourceRef), `${fixture.id}: appendix uses unavailable source ${sourceRef}`);
-        assert(publicSourceRefs.includes(sourceRef), `${fixture.id}: public source omits grounded ref ${sourceRef}`);
+        assert(availableSourceRefs.has(sourceRef), `${fixture.id}: evidence map uses unavailable source ${sourceRef}`);
+        assert(mappedSourceRefs.includes(sourceRef), `${fixture.id}: mapped source omits grounded ref ${sourceRef}`);
         const contract = config.grounding_contracts?.[sourceRef];
         if (config.grounding_contracts) {
           assert(contract, `${fixture.id}: source ${sourceRef} has no grounding contract`);
@@ -608,11 +613,11 @@ function validatePptReadyMarkdownOutput(fixture, output) {
       }
     }
   }
-  const appendixText = appendix.map(item => `${item.source}\n${item.boundary}`).join('\n').toLowerCase();
-  for (const term of fixture.fixture?.required_appendix_source_terms || []) {
+  const evidenceText = evidenceMap.map(item => `${item.source}\n${item.boundary}`).join('\n').toLowerCase();
+  for (const term of fixture.fixture?.required_internal_source_terms || []) {
     assert(
-      appendixText.includes(String(term).toLowerCase()),
-      `${fixture.id}: evidence appendix is missing source-chain term ${term}`,
+      evidenceText.includes(String(term).toLowerCase()),
+      `${fixture.id}: internal evidence map is missing source-chain term ${term}`,
     );
   }
 
@@ -623,9 +628,9 @@ function validatePptReadyMarkdownOutput(fixture, output) {
 
   if (config.require_claim_source_coverage) {
     const mappingsBySlide = new Map(slides.map(slide => [slide.id, []]));
-    for (const item of appendix) {
+    for (const item of evidenceMap) {
       for (const slideId of item.slide_ids) {
-        assert(mappingsBySlide.has(slideId), `${fixture.id}: appendix references unknown slide ${slideId}`);
+        assert(mappingsBySlide.has(slideId), `${fixture.id}: evidence map references unknown slide ${slideId}`);
         mappingsBySlide.get(slideId).push(item);
       }
     }
@@ -678,14 +683,14 @@ function validatePptReadyMarkdownOutput(fixture, output) {
         assert(slideIds.has(slideId), `${fixture.id}: goal lane ${lane.id} has no dedicated narrative slide ${slideId}`);
         assert(!ownedSlideIds.has(slideId), `${fixture.id}: slide ${slideId} is shared across independent goal lanes`);
         ownedSlideIds.add(slideId);
-        for (const item of appendix.filter(entry => entry.slide_ids?.includes(slideId))) {
+        for (const item of evidenceMap.filter(entry => entry.slide_ids?.includes(slideId))) {
           for (const sourceRef of item.source_refs || []) {
             assert(allowedRefs.has(sourceRef), `${fixture.id}: goal lane ${lane.id} uses another lane's source ${sourceRef}`);
           }
         }
       }
       const overviewRefs = new Set(
-        appendix
+        evidenceMap
           .filter(entry => entry.slide_ids?.includes(config.overview_slide_id))
           .flatMap(entry => entry.source_refs || []),
       );
@@ -731,11 +736,11 @@ function validatePptReadyMarkdownOutput(fixture, output) {
       assert.equal(item.statement, sourceItem.statement, `${fixture.id}: next-plan item ${item.id} changed its source statement`);
       assert.equal(item.closure_criterion, sourceItem.closure_criterion, `${fixture.id}: next-plan item ${item.id} changed its closure criterion`);
       const renderedStatement = `${sourceItem.rendered_prefix}${sourceItem.statement}`.toLowerCase();
-      const renderedCriteria = [
+      const renderedCriteria = (nonEmptyString(sourceItem.closure_criterion) ? [
         `通过标准：${sourceItem.closure_criterion}`,
         `通过标准是${sourceItem.closure_criterion}`,
         `通过标准是 ${sourceItem.closure_criterion}`,
-      ]
+      ] : ['通过标准未记录', '验收标准未记录'])
         .map(value => value.toLowerCase());
       assert(
         finalSlideBlocks.some(block => block.includes(renderedStatement) && renderedCriteria.some(value => block.includes(value))),
@@ -807,7 +812,7 @@ function validatePptRevisionRoundTrip(fixture, outputs) {
     }
   }
   for (const [slideId, terms] of Object.entries(expectation.required_revised_evidence || {})) {
-    const evidence = (revised.evidence_appendix || [])
+    const evidence = (revised.internal_evidence || [])
       .filter(item => item.slide_ids?.includes(slideId))
       .map(item => `${item.claim}\n${item.source}\n${item.boundary}`)
       .join('\n')
@@ -819,9 +824,9 @@ function validatePptRevisionRoundTrip(fixture, outputs) {
   }
   if (actualAdded.length || actualRemoved.length || changedSlideIds.length) {
     assert.notDeepEqual(
-      normalizeSemanticValue(revised.evidence_appendix),
-      normalizeSemanticValue(baseline.evidence_appendix),
-      `${fixture.id}: revised claims retained a stale evidence appendix`,
+      normalizeSemanticValue(revised.internal_evidence),
+      normalizeSemanticValue(baseline.internal_evidence),
+      `${fixture.id}: revised claims retained a stale internal evidence map`,
     );
   }
 }
@@ -850,9 +855,9 @@ function validatePptRevisionRejectionProbes(fixture, outputs) {
       mutantExpectation.unchanged_slide_ids.push(slideId);
     } else if (probe === 'nonexistent-classification') {
       mutantExpectation.changed_slide_ids.push('missing-slide');
-    } else if (probe === 'stale-evidence-appendix') {
-      revised.evidence_appendix = structuredClone(baseline.evidence_appendix);
-      revised.evidence_appendix[0].boundary += ' Irrelevant wording changed.';
+    } else if (probe === 'stale-internal-evidence') {
+      revised.internal_evidence = structuredClone(baseline.internal_evidence);
+      revised.internal_evidence[0].boundary += ' Irrelevant wording changed.';
     } else {
       throw new Error(`${fixture.id}: unknown revision rejection probe ${probe}`);
     }
@@ -939,11 +944,11 @@ export function validateWeeklyPptReadyMarkdownRejectionProbes(fixture) {
     } else if (probe === 'fabricated-confirmed-plan') {
       output.next_plan_items.find(item => item.commitment_state === 'proposed').commitment_state = 'confirmed';
     } else if (probe === 'fake-source') {
-      output.evidence_appendix[0].source_refs = ['nonexistent:made-up'];
+      output.internal_evidence[0].source_refs = ['nonexistent:made-up'];
     } else if (probe === 'fake-visible-source') {
-      output.evidence_appendix[0].source = 'nonexistent:made-up';
+      output.internal_evidence[0].source = 'nonexistent:made-up';
     } else if (probe === 'swapped-source-responsibility') {
-      const [first, second] = output.evidence_appendix;
+      const [first, second] = output.internal_evidence;
       [first.source, second.source] = [second.source, first.source];
       [first.source_refs, second.source_refs] = [second.source_refs, first.source_refs];
     } else if (probe === 'duplicate-pages') {
@@ -956,12 +961,12 @@ export function validateWeeklyPptReadyMarkdownRejectionProbes(fixture) {
     } else if (probe === 'second-lane-plan-only') {
       output.slides = slides.filter(slide => slide.id !== 'agent-native-path');
       output.slides[0].content = '分镜质量：让质量问题可定位；职责边界已收敛，routing 未证明收益。';
-    } else if (probe === 'second-lane-appendix-only') {
+    } else if (probe === 'second-lane-internal-only') {
       output.slides = slides.filter(slide => slide.id !== 'agent-native-path');
       output.slides[0].content = '分镜质量：让质量问题可定位；职责边界已收敛，routing 未证明收益。';
       output.slides.at(-1).content = '分镜质量｜Proposed：补齐 cleanup 归因；通过标准：拆出净贡献。';
     } else if (probe === 'cross-lane-source') {
-      const item = output.evidence_appendix.find(entry => entry.slide_ids?.includes('agent-native-path'));
+      const item = output.internal_evidence.find(entry => entry.slide_ids?.includes('agent-native-path'));
       item.source = 'raw:quality-objective';
       item.source_refs = ['raw:quality-objective'];
     } else if (probe === 'overview-without-why') {
@@ -969,11 +974,11 @@ export function validateWeeklyPptReadyMarkdownRejectionProbes(fixture) {
     } else if (probe === 'unsupported-overview-claim') {
       output.slides[0].content += '\n两条主线都已生产上线。';
     } else if (probe === 'swapped-slide-grounding') {
-      const quality = output.evidence_appendix.find(item => item.slide_ids?.includes('quality-eval'));
-      const agent = output.evidence_appendix.find(item => item.slide_ids?.includes('agent-native-path'));
+      const quality = output.internal_evidence.find(item => item.slide_ids?.includes('quality-eval'));
+      const agent = output.internal_evidence.find(item => item.slide_ids?.includes('agent-native-path'));
       [quality.slide_ids, agent.slide_ids] = [agent.slide_ids, quality.slide_ids];
     } else if (probe === 'generic-grounding-text') {
-      for (const item of output.evidence_appendix) {
+      for (const item of output.internal_evidence) {
         item.claim = 'generic claim';
         item.boundary = 'generic boundary';
       }
@@ -997,7 +1002,7 @@ export function validateWeeklyPptReadyMarkdownRejectionProbes(fixture) {
       output.empty_state.next_action = '';
     } else if (probe === 'empty-state-leaks-deck') {
       output.supported_claim = 'invented';
-      output.evidence_appendix = [{claim: 'fake', source: 'fake', boundary: 'fake'}];
+      output.internal_evidence = [{claim: 'fake', source: 'fake', boundary: 'fake'}];
     } else if (probe === 'empty-state-wrong-framing') {
       output.audience_contract.primary_audience = '负责拍板的项目经理';
       output.audience_contract.duration = '5 分钟';

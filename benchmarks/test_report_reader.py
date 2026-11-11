@@ -106,6 +106,19 @@ class ReportReader(unittest.TestCase):
             self.assertEqual(json.loads(run.stdout)['groups']['work'][0]['view']['entries'], entries)
         self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}, before)
 
+    def test_capture_history_uses_project_group_not_report_default(self):
+        config = self.config(self.cwd, 'personal', 'current')
+        config.write_text(config.read_text().replace('default_reporting_group: null',
+                                                    'default_reporting_group: work'))
+        self.paths['current'].write_text(json.dumps([self.fact('Continuing work', work_stream='personal-stream')]))
+        default = self.read(project_slugs=['current'])
+        self.assertEqual(default['excluded']['outside_scope'], 1)
+        with patch.object(state, 'read_view', wraps=state.read_view) as reader:
+            result = self.read(scope='personal', project_slugs=['current'])
+        self.assertEqual({call.args[1] for call in reader.call_args_list}, {'current'})
+        self.assertEqual(result['groups']['personal'][0]['view']['entries'][0]['work_stream'],
+                         'personal-stream')
+
     def test_partition_precedes_body_read_and_config_overrides_registry(self):
         self.config(self.root / 'other', 'personal', 'other')
         self.config(self.root / 'private', 'work', 'private')

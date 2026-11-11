@@ -42,8 +42,9 @@ meeting, assumes they know the project background but not this week's changes,
 and ends with next-week closure. It starts from why the work exists, selects the
 weekly result or final choice, reopens sources only for selected claims, and
 uses cognitive roles only when a complex merge/split decision needs them.
-Public output contains claim-led slide content and a compact Evidence Appendix;
-it contains no production guidelines or page-level source packets.
+Public output contains claim-led slide content with necessary evidence and limits.
+Source mappings stay in internal records or speaker notes; the deck contains no
+Evidence Appendix, production guidelines, or page-level source packets.
 
 Design rationale and mechanism split only when they use different grounded
 content, serve the same Deck Thesis, and the mechanism depends on the design

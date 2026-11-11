@@ -175,8 +175,7 @@ missing the management conclusion.
 
 Read the Markdown without making a PPT. Pass only when a reader can reconstruct
 the cumulative claim sequence, material facts, relationships, numbers, risks,
-and decision without production guidance or the Evidence Appendix as a
-prerequisite.
+and decision without production guidance or access to internal source records.
 
 ### P3-C — Template-native Editable Delivery
 
@@ -219,8 +218,9 @@ Pass only when:
   proof;
 - current implementation and target design are visibly different claims with
   different sources;
-- the Evidence Appendix preserves the qualified commit, captured snapshot, and
-  design source without leaking paths or hashes into the spoken slide.
+- internal source records or speaker notes preserve the qualified commit,
+  captured snapshot, and design source without exposing an Evidence Appendix
+  or leaking paths and hashes into the spoken slide.
 
 If the repo path, commit, or captured snapshot cannot be resolved, pass only by
 falling back to a raw-supported conceptual view and stating that the current
@@ -365,7 +365,9 @@ Executable mutations must reject:
 - The main deck defaults to the final choice and shortest rationale; complete
   rejected-path archaeology stays local unless the audience must choose now.
 - Full Source Grounding Packets and unsupported-claim ledgers remain internal;
-  the public appendix contains only compact claim-to-source boundaries.
+  source mappings stay in internal records or speaker notes, with no public
+  Evidence Appendix. Executable fixture field `internal_evidence` is a private
+  validation sidecar, never part of the audience deck.
 - Complex results split only when pages use different grounded material and
   cognitive tasks, serve one local goal narrative, and form a prerequisite
   sequence.
@@ -379,19 +381,21 @@ Executable mutations must reject:
   reading, and blind content handoff.
 - Mechanism completion, effect validation, and production acceptance are
   reported separately.
-- Every open risk and next-week acceptance target has a pass/fail closure
-  criterion.
+- Open risks and next-week acceptance targets preserve recorded closure
+  criteria; missing criteria stay explicitly unrecorded.
 - The default same-department deck ends with a next-week plan page that
   distinguishes confirmed commitments from proposals. Each item preserves its
-  source commitment state and states a closure criterion; source commitments
+  source commitment state and any recorded closure criterion; missing criteria
+  stay explicitly unrecorded. Source commitments
   and rendered plan blocks match one-to-one, while negated, omitted, swapped,
   or promoted commitments fail validation.
 - A revision that changes, adds, or removes a supported claim also changes its
-  evidence appendix; reusing the prior appendix fails validation.
+  internal evidence map; reusing a stale map fails validation.
 - Expected effects never appear as observed outcomes, and missing numeric
   evidence never becomes a guessed baseline, target, or trend.
 - Default department slides keep source paths, commit hashes, raw evidence ids,
-  and internal links in the appendix; only explicit technical-review decks may
+  and internal links in internal records or speaker notes; only explicit
+  technical-review decks may
   show sanitized compact references.
 - A requested template-native PPTX maps every output page to a real source page,
   remains natively editable, preserves the prior version, and passes rendered
@@ -451,7 +455,7 @@ formula:
    go/no-go gate.
 
 Duration-route history, module topology, test and branch inventory, and the
-agent-native v3.1 mechanism stay in appendix or a separate explicit technical
+agent-native v3.1 mechanism stay in speaker notes or a separate explicit technical
 review unless the audience outcome requires them. Terms such as `B0/B1`,
 `CP1-CP4`, `mode_id`, `TaskSkillSnapshot`, and commit or branch inventories must
 not dominate the manager deck.

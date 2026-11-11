@@ -19,7 +19,7 @@ Tracework is a local reporting and memory plugin for **Codex** and **Claude Code
 Say **“wrap up” (收工)** during day-to-day development to checkpoint durable facts, architectural tradeoffs, and key decisions. When it is time to update your team or management, generate **daily, weekly, and monthly progress reports with direct evidence backing**.
 
 - **Evidence-Backed**: Every claim in a report can be traced back to raw entries, rejected alternatives, code changes, and identified risks. If records are missing, Tracework flags the coverage gap instead of hallucinating outcomes.
-- **Local Sovereignty**: All facts and reports stay in your own local vault. No external telemetry, no background conversation leakage, and total data privacy.
+- **Local Sovereignty**: Records stay in your own local vault, and the plugin has no separate telemetry service; how the host agent processes content it reads depends on your chosen model and host settings.
 - **Zero-Friction Preview**: Generate reports immediately in the active session without configuring a vault. When ready for durable storage, initialize with a single command.
 
 > [!NOTE]
@@ -130,7 +130,7 @@ When explicitly requested (`weekly PPT`, `周报 PPT`, or `presentation outline`
 
 - **Audience Focus**: Tailored for same-department weekly meetings—linking original goals to this week's final choices, shortest necessary rationale, evidence boundaries, and next week's plan.
 - **Compression Review**: Excessive length triggers editorial compression review instead of an arbitrary slide count limit.
-- **Compact Appendix**: Sources are reopened only for selected claims, with a compact evidence map in the appendix. The Markdown file remains fully self-contained.
+- **Evidence Mapping**: Sources are reopened only for selected claims, with source mappings kept in internal records or speaker notes instead of a public evidence appendix; the slide body keeps necessary evidence and limits so the Markdown remains self-contained.
 
 ### 4. Update Protection & Fact Correction
 

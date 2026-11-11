@@ -101,6 +101,9 @@ and candidate with synthetic projects and the same capture target date:
   before drafting and exact reuse, expanded metric abbreviations and a defined
   denominator. A hash-valid correction replaces a misleading historical name;
   only the effective name may be reused. Decision IDs remain unchanged.
+- Non-default project group: the current project is `personal` while the
+  default report group is `work`. Expect the lookup to use the confirmed
+  project group and reuse its work stream, without reading another project.
 - New work: the source explicitly starts an unrelated stream. Expect a distinct
   supported name, not forced reuse. If it replaces prior work, explain the
   relationship in `context` without renaming history or decision instances.
