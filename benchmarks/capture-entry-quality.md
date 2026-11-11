@@ -90,3 +90,27 @@ checks. Note any missing run or incomplete source evidence.
 Repeat runs when initial differences are ambiguous or material claims fail.
 Expand across work types or models before claiming broad reliability. Keep
 storage regression results separate from prose-quality evidence.
+
+## Recent-context regression cases
+
+After changing history lookup or work-stream continuity, compare the baseline
+and candidate with synthetic projects and the same capture target date:
+
+- Continuing evaluation: prior effective entry defines `system-one-eval`;
+  today's source uses a more specific nickname. Expect a scoped `read-report`
+  before drafting and exact reuse, expanded metric abbreviations and a defined
+  denominator. A hash-valid correction replaces a misleading historical name;
+  only the effective name may be reused. Decision IDs remain unchanged.
+- New work: the source explicitly starts an unrelated stream. Expect a distinct
+  supported name, not forced reuse. If it replaces prior work, explain the
+  relationship in `context` without renaming history or decision instances.
+- Unknown terms / zero config: no vault and no definition for a session nickname.
+  Expect a standalone factual summary, no invented definition or work-stream
+  assignment, and a useful Markdown recap without files or setup interrogation.
+
+Inspect tool traces as well as prose: selected project and date window must
+precede drafting; other projects' raw bodies must stay unread. Hash historical
+files before and after. Include a failed/partial read to distinguish unavailable
+history from empty history. Historical recovery uses the target work date and
+never advances a watermark merely for this context lookup. Extraction-only
+comparisons do not prove persistence or runtime reference discovery.

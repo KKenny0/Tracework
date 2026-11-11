@@ -85,7 +85,9 @@ available and do not fall back to broad home-directory discovery.
 ## Synthesize Entries
 
 1. Read every returned chunk for one project sequentially before writing.
-2. Group related sessions into coherent work streams.
+2. Follow Recent Project Context in `capture-entry-writing.md` for this project
+   and requested date before drafting. Then group related sessions into coherent
+   work streams, reusing supported historical names.
 3. Produce normally 1-3 entries per project; use at most 5 for an unusually
    broad day.
 4. Apply the existing archetype, adaptive-depth, reporting-boundary, evidence,

@@ -2,6 +2,53 @@
 
 Use this reference after choosing `capture_depth`.
 
+## Recent Project Context
+
+Before drafting session-end, checkpoint, or Capture Day entries:
+
+1. Resolve config with `tracework_raw.py resolve-config --cwd <project-root>`.
+   Without a vault, skip history lookup and use the fallback in step 4.
+   With a vault, resolve the slug with `tracework_raw.py project-slug
+   --cwd <project-root>`. For Capture Day, use each selected project's root,
+   not the launch directory.
+2. With a vault, read that project's effective entries for the 28 calendar days
+   ending on the capture target date (inclusive; start = target minus 27 days).
+   For historical recovery, use the requested work date, not today's date:
+
+   ```bash
+   python <this-skill>/scripts/tracework_raw.py read-report \
+     --cwd <project-root> --report weekly \
+     --start <target-minus-27-days> --end <target-date> \
+     --project-slug <resolved-slug>
+   ```
+
+   Pass `--scope <resolved-group>` for an explicitly scoped Capture Day run.
+   `weekly` selects the existing read interface; it does not generate a report
+   or apply Daily's repo filter. Use only the selected project's `view.entries`
+   under `groups`, not correction history or superseded raw records. These are
+   effective facts known now for the requested work period; they are not proof
+   of what was known then. Use historical terms only when their meaning matches
+   the recovered source. The reader applies scope before opening raw bodies.
+3. Compare supported term definitions and `work_stream` values before drafting.
+   Reuse an existing work-stream value verbatim when it describes the same
+   continuing work. Mere word similarity is not enough. Give a genuinely new
+   stream a concise name; when it replaces an old stream, explain old → new and
+   why in `context`. This is a relationship for readers, not an automatic merge.
+   Keep `decision_threads` and lifecycle subjects unchanged: they identify
+   decision instances, not work-stream groups.
+4. No vault or no matching history: continue from supported session facts.
+   A blocked/partial/failed read, excluded project, or null view is not empty
+   history; state that continuity could not be checked and use only supported
+   grouping, leaving it absent if
+   uncertain. Never guess a group to satisfy a field requirement. Do not widen
+   scope, register projects, write history, or advance watermarks for this read.
+
+This bounded lookup does not prove a term or stream never existed earlier.
+When a known older definition is needed, use its precise locator within the
+same project and scope; do not scan the whole vault. Keep a short explanation
+in the new entry even when citing an older definition. Historical entries stay
+unchanged; this step improves only the entries being created.
+
 ## Archetype
 
 Choose one primary archetype:
@@ -106,7 +153,17 @@ Run two separate checks on the drafted entry:
 1. **Standalone reading:** using only `summary` and `context`, can a colleague
    state what problem this addressed, what changed or was learned, and why?
    Using the rest of the entry, can they state what the evidence supports and
-   what remains unresolved? Rewrite unexplained shorthand or missing links.
+   what remains unresolved? Check project abbreviations, code names, colloquial
+   labels, and UI terms in every narrative field, including `impact` and
+   `abandoned_alternatives`. Explain necessary terms inline on first use in the
+   entry; an older reference supplements rather than replaces that explanation.
+   Expand metric abbreviations and state what denominators count and which
+   population/comparison they use. If the source does not define a term, use
+   supported plain language in `summary` and record the unresolved meaning as
+   a limit elsewhere; never invent a definition.
+   Check the recent-history result: known continuing work uses the exact prior
+   `work_stream`; new/replacement streams have supported reasons. Include
+   `work_stream` whenever its grouping is known, and leave it absent otherwise.
 2. **Source fidelity:** compare every material fact in the source checklist
    with the whole entry. Preserve the final choice and rationale, material
    rejected alternatives, scope and quotas, numbers with their comparison

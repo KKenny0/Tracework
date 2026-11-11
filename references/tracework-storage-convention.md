@@ -529,7 +529,14 @@ Recommended producer behavior:
   repository root as `path`. It identifies only the committed tree observed at
   capture time; it never includes or proves uncommitted work. Do not reconstruct
   a historical snapshot during Capture Day from the repository's current state.
-- Add `project_area` or `work_stream` when the natural module or narrative grouping is obvious. Leave them absent rather than guessing.
+- Add `project_area` when the natural module is obvious.
+- Include `work_stream` when the grouping is known. Capture first checks the
+  same project's recent effective entries and reuses a semantically matching
+  value verbatim across weeks. For a genuinely new stream replacing an old one,
+  record the old/new relationship and reason in `context`; this does not merge
+  history. Leave uncertain grouping absent rather than guessing. Historical
+  entries without this optional field remain valid. Work-stream reuse never
+  renames `decision_threads` or lifecycle subjects.
 - Add `motivation` when the trigger for the change is clear — the problem being solved, the constraint that forced the change, or the goal being pursued. This is the "why now" behind the change.
 - Add `exploration_paths` when the session involved trying multiple approaches. Each entry should describe the approach and its outcome (e.g. "lazy loading → marginal gain on mobile first-screen").
 - Add `abandoned_alternatives` when approaches were explicitly considered and rejected. Include the rejection reason — this is valuable for later reviews of decisions.

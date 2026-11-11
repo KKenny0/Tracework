@@ -73,7 +73,12 @@ optional fields.
    - Respect explicit depth overrides such as `/tracework:capture deep` or
      "简单记一下". If no override exists, route from the session evidence.
 
-2. **Extract signals.**
+2. **Read recent project context before drafting.**
+   - Follow the Recent Project Context step in
+     `references/capture-entry-writing.md` before naming work streams or writing
+     entries. This also applies to checkpoint and each Capture Day project.
+
+3. **Extract signals.**
    - Read `references/capture-entry-writing.md`.
    - Classify the primary archetype: `decision`, `repair`, `investigation`,
      `build`, or `maintenance`.
@@ -87,7 +92,7 @@ optional fields.
      `references/capture-entry-writing.md`. Never backfill Capture Day with the
      repository's current `HEAD`.
 
-3. **Generate raw entries.**
+4. **Generate raw entries.**
    - Include `capture_depth` on every new `session-recap` entry.
    - Add the minimal `reporting` object only when the report boundary is clear.
      Keep `work_stream` at the top level and do not pre-write channel-specific
@@ -104,7 +109,7 @@ optional fields.
      and document or revision id when known.
    - Do not assign report-local `O#`, `W#`, `D#`, or `E#` labels.
 
-4. **Write or fallback.**
+5. **Write or fallback.**
    - Apply the standalone-reading and source-fidelity checks in
      `references/capture-entry-writing.md` before persistence.
    - Read `references/capture-operations.md`.

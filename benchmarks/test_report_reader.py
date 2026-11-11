@@ -70,6 +70,42 @@ class ReportReader(unittest.TestCase):
                               cwd=self.root, capture_output=True, text=True,
                               env={**os.environ, 'HOME': str(self.home), 'USERPROFILE': str(self.home)})
 
+    def test_capture_history_is_scoped_effective_and_read_only(self):
+        original = self.fact('Old shorthand', work_stream='accidental-rename',
+                             decision_threads=['look-gate'])
+        corrected = self.fact('Character reuse evaluation', work_stream='system-one-eval',
+                              decision_threads=['look-gate'])
+        corrected['captured_at'] = '2026-09-01T10:00:00+08:00'
+        corrected['correction'] = {
+            'operation': 'replace',
+            'target_ref': {'week': '2026-W35', 'entry_index': 0,
+                           'timestamp': original['timestamp']},
+            'target_hash': state.entry_hash(original), 'reason': 'Wrong grouping',
+        }
+        self.paths['current'].write_text(json.dumps([original, corrected]))
+        self.write('vault/raw/weeks/2026-W36/current.json', [
+            {**self.fact('Future work'), 'timestamp': '2026-09-02T10:00:00+08:00'}])
+        self.write('vault/raw/weeks/2026-W30/current.json', [
+            {**self.fact('Too old'), 'timestamp': '2026-07-25T10:00:00+08:00'}])
+        before = {p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        with patch.object(state, 'read_view', wraps=state.read_view) as reader:
+            result = raw.read_report(self.cwd, 'weekly', '2026-07-30', '2026-08-26',
+                                     scope='work', project_slugs=['current'])
+        self.assertEqual({call.args[1] for call in reader.call_args_list}, {'current'})
+        entries = result['groups']['work'][0]['view']['entries']
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]['work_stream'], 'system-one-eval')
+        self.assertEqual(entries[0]['decision_threads'], ['look-gate'])
+        args = ['read-report', '--cwd', str(self.cwd), '--report', 'weekly',
+                '--start', '2026-07-30', '--end', '2026-08-26',
+                '--scope', 'work', '--project-slug', 'current']
+        for script in ['skills/capture/scripts/tracework_raw.py',
+                       'plugins/tracework/skills/capture/scripts/tracework_raw.py']:
+            run = self.cli(script, args)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertEqual(json.loads(run.stdout)['groups']['work'][0]['view']['entries'], entries)
+        self.assertEqual({p: p.read_bytes() for p in self.root.rglob('*') if p.is_file()}, before)
+
     def test_partition_precedes_body_read_and_config_overrides_registry(self):
         self.config(self.root / 'other', 'personal', 'other')
         self.config(self.root / 'private', 'work', 'private')
