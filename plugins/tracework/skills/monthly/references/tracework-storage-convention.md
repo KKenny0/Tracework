@@ -490,8 +490,10 @@ Field semantics:
   `outcome` for a recorded state change, `progress` for bounded advancement,
   and `activity` for work that should be visible but not promoted.
 - `impact_boundary` says whether impact is observed, expected, or unknown.
-- `evidence_boundary` says whether the claim is verified by direct evidence,
-  recorded in the raw entry only, or limited by fallback/incomplete evidence.
+- `evidence_boundary` says whether the claim in `outcome_candidate.statement`
+  is verified by direct evidence, recorded in the raw entry only, or limited by
+  fallback/incomplete evidence. Critical scope boundaries must accompany the
+  statement.
 - `evidence_gap` names what would be needed to strengthen the claim.
 - New entries keep grouping in top-level `work_stream` and keep risks,
   questions, alternatives, and decision threads in their factual top-level
@@ -539,7 +541,7 @@ Recommended producer behavior:
   renames `decision_threads` or lifecycle subjects.
 - Add `motivation` when the trigger for the change is clear — the problem being solved, the constraint that forced the change, or the goal being pursued. This is the "why now" behind the change.
 - Add `exploration_paths` when the session involved trying multiple approaches. Each entry should describe the approach and its outcome (e.g. "lazy loading → marginal gain on mobile first-screen").
-- Add `abandoned_alternatives` when approaches were explicitly considered and rejected. Include the rejection reason — this is valuable for later reviews of decisions.
+- Add `abandoned_alternatives` when approaches were explicitly considered and rejected. Include the rejection reason — this is valuable for later reviews of decisions. Do not record document omissions, editorial fixes, or feedback additions here; record those as artifact deltas or revision context.
 - Add `open_questions` when the session ends with unresolved decisions or unanswered questions. These serve as entry points for the next session.
 - Add `sync_suggestions` when the entry mentions a decision, prompt/schema
   contract, orchestration rule, or intent artifact that may require follow-up in

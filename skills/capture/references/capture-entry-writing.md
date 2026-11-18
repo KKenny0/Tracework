@@ -93,13 +93,17 @@ its new result; it need not repeat the whole session.
 
 Then distribute that explanation across the existing fields:
 
-- `summary`: the concrete change or finding and the boundary reached
-- `context`: the problem and the shortest causal explanation needed to
-  understand the change
+- `summary`: the concrete action, specific object acted upon, the outcome
+  reached in this session, and any critical boundary affecting comprehension.
+  Put the main conclusion before wrap-up items or pending next steps.
+- `context`: the problem background and the shortest causal explanation needed
+  to understand why the work was done and how this change happened
 - `motivation`: why the work was needed, when that adds to `context`
 - `impact`: the supported consequence, distinguishing observed from expected
-- `exploration_paths` and `abandoned_alternatives`: material attempts, results,
-  and choices with their reasons
+- `exploration_paths`: material attempts and intermediate findings with outcomes
+- `abandoned_alternatives`: material alternative technical routes or designs
+  explicitly evaluated and rejected, with reasons. Never record document
+  omissions, typos, or feedback-driven additions here
 - `open_questions`: the remaining decision, evidence gap, or next useful action
 - evidence and artifact fields: locators and the detail needed to inspect claims
 
@@ -115,6 +119,15 @@ They should understand `summary` and `context` without opening a transcript,
 following evidence links, or decoding implementation names. These fields orient
 the reader; the rest of the entry supplies the decision and evidence detail.
 
+- In `summary`, clearly state the concrete action, the specific object acted
+  upon, the session outcome, and any critical boundary that affects
+  comprehension. Place the main conclusion or core deliverable before wrap-up
+  items or pending next steps. Retain only accurate names that help distinguish
+  the subject or outcome (such as a document path `docs/sync-protocol.md` or
+  module name); move technical identifiers, hash digests, file counts, and
+  inventories to detail fields.
+- In `context`, supply the background problem and cause-and-effect needed to
+  understand why the change was made and what necessitated it.
 - Describe who or what did what and what happened. Explain a necessary term on
   first use through its behavior, then use that term consistently. A validator
   name or an internal label is not an explanation of what it checks or changes.
@@ -137,6 +150,45 @@ the reader; the rest of the entry supplies the decision and evidence detail.
   one sentence. `deep` adds supported reasoning and trade-offs, not a longer
   inventory of commands, files, and checks.
 
+### Sequential Work & Continuous Streams
+
+When a session continues a topic with an explicit predecessor (such as an
+initial discovery and draft followed by feedback revision, or an investigation
+followed by implementation):
+
+- Frame the work as "inherited stage + current increment" (`承接的阶段 + 本次增量`).
+- Distinctly preserve the facts of each stage: discovery/investigation,
+  proposal, document revision, implementation, and acceptance. Do not
+  retroactively bundle feedback revisions into the initial draft or attribute
+  later additions to earlier work.
+- Express continuity and increment through existing fields:
+  - `context`: state the predecessor stage being continued (e.g. "承接前次 sync-protocol 初稿，针对审阅反馈补充...") and why the current increment was needed.
+  - `artifact_context.delta`: record the exact incremental change to the durable artifact in this session.
+  - `work_stream`: use a consistent work stream name (e.g. `sync-protocol-resilience`) to group related entries across sessions.
+- Ground all connections strictly in authorized session materials; do not assume
+  or invent unseen predecessor links.
+- Follow Tracework's append-only raw storage and report-side synthesis: each
+  capture records only this session's increment, leaving consolidation to
+  Daily, Weekly, and Monthly reports.
+
+### Admission for Abandoned Alternatives
+
+Admitting an item into `abandoned_alternatives` requires strict evidence:
+
+- The source must show that a specific alternative technical route or design
+  choice was explicitly evaluated, considered, and rejected, with a documented
+  reason (`["Approach rejected -> reason"]`).
+- NEVER classify document omissions, missing sections, typos, formatting fixes,
+  or feedback-driven additions as abandoned alternatives. If an earlier document
+  omitted a section and the session added it, that is a revision fact
+  (`artifact_context.delta` or `context`), NOT an abandoned alternative. The
+  count of abandoned alternatives for a pure revision or omission fix must be 0.
+- When an exploratory attempt has independent technical value, record it in
+  `exploration_paths` (`approach tried -> observed outcome`).
+- In `decision` or `deep` captures, populate optional fields only when supported
+  by evidence. If no alternative was rejected, leave `abandoned_alternatives`
+  empty or omit it; do not fabricate rejected alternatives to fill the field.
+
 For example, a session might establish that one malformed import row caused a
 whole batch to be rejected. A locally tested proposal preserves valid rows and
 retries only invalid rows, but has not shipped.
@@ -153,7 +205,7 @@ fields. This is an explanation pattern, not a required import workflow.
 
 ### Before Writing
 
-Run two separate checks on the drafted entry:
+Run these checks on the drafted entry before persistence:
 
 1. **Standalone reading:** using only `summary` and `context`, can a colleague
    state what problem this addressed, what changed or was learned, and why?
@@ -178,9 +230,27 @@ Run two separate checks on the drafted entry:
    result from an independently checked one. Check causal links back to the
    source; narrow unsupported causality instead of making the story sound
    complete.
+3. **Four Standalone Questions:** confirm that `summary`, `context`, and
+   `reporting` allow a colleague without the transcript to answer directly:
+   - **做了什么 (What was done)**: what concrete action was performed on what
+     specific object?
+   - **可见前序下本次新增了什么 (What was incrementally added)**: under visible
+     predecessors, what is this session's distinct incremental contribution?
+   - **证据支持哪项结果 (Which result does evidence support)**: which exact
+     result is supported by direct evidence, and what is its boundary?
+   - **什么仍待实施或验证 (What remains pending)**: what implementation, test,
+     or verification gates remain unfulfilled?
 
-Both checks must pass before persistence. Clear prose does not strengthen the
-evidence, and a valid JSON object does not prove either quality check passed.
+If a draft cannot clearly answer all four questions from `summary`, `context`,
+and `reporting`:
+- Rewrite vague summaries or internal shorthands using specific source facts.
+- Facts not provided in the source material must be kept explicitly as unknown
+  or omitted, never guessed or fabricated.
+- Maintain existing schema, commands, and default receipt length (about six
+  lines or fewer).
+
+All checks must pass before persistence. Clear prose does not strengthen the
+evidence, and a valid JSON object does not prove quality checks passed.
 
 ## Raw Entry Shape
 
@@ -307,6 +377,25 @@ daily/weekly/monthly outputs, not agent handoff.
   verification is missing.
 - `activity`: work happened and should remain visible, but it is not a
   defensible outcome.
+
+### Binding Evidence Boundary to the Statement
+
+- `evidence_boundary` (`verified | recorded | limited`) must strictly evaluate
+  the specific assertion made in `outcome_candidate.statement`, not an
+  aspirational goal or downstream runtime effect.
+- The `statement` itself must specify the verified object, the actual result,
+  and critical scope limits affecting understanding. For example: "Updated and
+  lint-verified retry and dead-letter specifications in docs/sync-protocol.md;
+  runtime implementation and service behavior remain unverified."
+- Never claim broad verification when only a document, format, or local check
+  was inspected. Verifying document completeness or linting must not be
+  asserted as system, runtime, or model performance.
+- Place critical boundaries directly beside the statement in `statement`.
+  Record detailed verification needs in `evidence_gap` and evidence notes in
+  `source_refs`.
+- When multiple strengths of evidence coexist within one session, first narrow
+  the statement to what is defensibly verified. Only split into separate
+  entries if the achievements represent distinct, independent durable outcomes.
 
 Use `impact_boundary` and `evidence_boundary` to prevent later reports from
 overstating the claim. Name `evidence_gap` when verification is missing. Do not

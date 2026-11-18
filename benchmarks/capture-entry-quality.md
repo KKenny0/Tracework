@@ -33,17 +33,42 @@ Include [the synthetic routine edit](fixtures/capture-routine-edit.md) as a
 simple control: the capture should stay lite, retain the path correction and
 reported diff check, and avoid claiming the command or tests were executed.
 
+Include [the synthetic series revision](fixtures/capture-series-revision.md) to
+evaluate continuous sessions on the same topic: the initial draft and feedback
+revision must remain distinct entries with explicit "inherited stage + current
+increment" framing; omitted sections supplemented after feedback must be
+recorded as revision deltas, never as abandoned alternatives; and document
+verification must not claim runtime protocol compliance.
+
+Include [the synthetic rejected alternative](fixtures/capture-rejected-alternative.md)
+to verify genuine decision recording: an explicitly evaluated and rejected route
+must enter `abandoned_alternatives` with its rejection reason, while microbenchmark
+speedup keeps its synthetic boundary distinct from untested cluster integration.
+
+Retain [the withheld repair incident](fixtures/capture-repair-incident.md) as an
+unseen control case to check root cause precision, bounded unit test claims, and
+absence of fabricated abandoned alternatives.
+
 ## Fidelity gate
 
 Compare each entire output with its source before scoring readability:
 
 - Goal and final choice are preserved, including material changes of direction
   and the evidence or constraint that changed the choice.
+- Sequential sessions on a shared topic preserve "inherited stage + current increment".
+  Initial discovery, drafting, revision, implementation, and acceptance stay
+  distinct. Later supplements are never lumped into earlier drafts or double-counted.
 - Causal claims keep their supported strength. Hypotheses, unknown causes and
   missing reasons stay qualified; a convincing narrative is not new evidence.
 - Plans, implementation, execution, deployment and acceptance remain distinct.
 - Offline replay, synthetic tests, live calls, user feedback and independently
   inspected results keep their respective limits.
+- Abandoned alternatives strictly require explicit consideration and rejection
+  with documented reasons. Document omissions, typos, and feedback additions are
+  revision deltas, never abandoned alternatives.
+- The `reporting.evidence_boundary` is strictly bound to `outcome_candidate.statement`.
+  Checking document completeness or markdown formatting must not be asserted as
+  system, model, or runtime verification. Critical limits appear beside the claim.
 - Important numbers keep their subject, denominator, period and comparison.
   Intermediate counts do not replace the final result or get added to it.
 - Material rejected alternatives, accepted costs and remaining gates survive.
@@ -60,6 +85,12 @@ A fidelity failure makes that output ineligible to win on readability.
 First show only `summary` and `context` to a reader without the transcript. Ask
 what problem the work addressed, what changed or was learned, and why. Then show
 the whole entry and ask what the evidence supports and what remains unresolved.
+The reader should be able to answer four standalone questions directly:
+1. What was done (concrete action and specific object)?
+2. What was incrementally added over visible predecessor work?
+3. Which result does the evidence support?
+4. What remains pending implementation or verification?
+
 Grade these properties on a 0-2 scale:
 
 | Property | 0 | 1 | 2 |

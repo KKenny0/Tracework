@@ -82,9 +82,18 @@ optional fields.
    - Read `references/capture-entry-writing.md`.
    - Classify the primary archetype: `decision`, `repair`, `investigation`,
      `build`, or `maintenance`.
-   - Build the supported explanation before filling fields, following the
-     entry-writing reference: goal, key cause or constraint, chosen action and
-     reason, result, and remaining gate. Preserve material changes of direction.
+   - Build the supported explanation before filling fields, answering the four
+     standalone questions: concrete action and object, increment over visible
+     predecessors, evidence support, and remaining gates.
+   - For sequential work on a shared topic, frame "inherited stage + current
+     increment" without bundling feedback revisions back into initial drafts or
+     double-counting facts.
+   - Strictly limit `abandoned_alternatives` to explicitly evaluated and
+     rejected technical routes with reasons. Never record document omissions,
+     typos, or feedback additions as abandoned alternatives.
+   - Bind `reporting.evidence_boundary` directly to `outcome_candidate.statement`,
+     placing critical scope limits (e.g. document completeness vs runtime/service
+     execution) beside the claim.
    - Group related work into 1-3 entries. Use at most 5 entries for unusually
      broad sessions.
    - For normal session-end or checkpoint capture, resolve one immutable
@@ -110,8 +119,8 @@ optional fields.
    - Do not assign report-local `O#`, `W#`, `D#`, or `E#` labels.
 
 5. **Write or fallback.**
-   - Apply the standalone-reading and source-fidelity checks in
-     `references/capture-entry-writing.md` before persistence.
+   - Apply the standalone-reading, source-fidelity, and four-standalone-questions
+     checks in `references/capture-entry-writing.md` before persistence.
    - Read `references/capture-operations.md`.
    - Use `tracework_raw.py append-entry` as the canonical write path.
    - Upsert artifact dossiers when warranted and enabled.
@@ -150,7 +159,18 @@ one-line setup hint after the Markdown recap.
 
 Before finalizing each entry, check:
 
-- Have both entry-writing checks passed: standalone reading and source fidelity?
+- Have all entry-writing checks passed: standalone reading, source fidelity,
+  and the four standalone questions?
+- Does `summary` state action, specific object, outcome, and critical bounds,
+  with the main conclusion placed before wrap-up items?
+- Does `context` supply the background problem and cause-and-effect needed to
+  understand the change?
+- If continuing an earlier stage, are the predecessor stage and current increment
+  clearly distinguished without double-counting?
+- Are document omissions, typos, and feedback completions recorded as revision
+  deltas rather than `abandoned_alternatives`?
+- Is `reporting.evidence_boundary` bound strictly to `outcome_candidate.statement`,
+  with critical limits stated beside the claim?
 - Is `capture_depth` no heavier than the signal deserves?
 - Does `status` bound the claim as done, ongoing, risk, or decision?
 - Does `reporting.outcome_candidate.kind`, when present, avoid overstating the
