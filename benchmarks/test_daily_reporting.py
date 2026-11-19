@@ -83,6 +83,40 @@ class DailyReporting(unittest.TestCase):
                 writer.update(path, '2026-09-12', {'work': 'Replacement'}, 'stale-hash')
             self.assertEqual(path.read_bytes(), base)
 
+    def test_snapshot_cli_reads_only_requested_day_and_groups(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'Daily.md'
+            command = [sys.executable, '-B', str(ROOT / 'skills/daily/scripts/update_daily_note.py'),
+                       '--inspect', '--path', str(path), '--date', '2026-09-12', '--group', 'work']
+
+            def inspect(*args):
+                run = subprocess.run(command + list(args), capture_output=True, text=True)
+                return run.returncode, json.loads(run.stdout)
+
+            self.assertEqual(inspect(), (0, {'status': 'ready', 'expected_file_hash': 'missing', 'bodies': {}}))
+            self.assertEqual(list(path.parent.iterdir()), [])
+            original = writer.merge(b'', '2026-09-11', {'work': 'Prior day'})
+            title = '#### 剧本｜排练准备'
+            work = title + '\n\n- **分场稿**：交给排练组。'
+            original = writer.merge(original, '2026-09-12', {'work': work, 'personal': 'Private'})
+            # The unrelated group's hand edit survives and cannot enter the snapshot payload.
+            original = original.replace(b'Private', b'Private edit')
+            path.write_bytes(original)
+            self.assertEqual(inspect('--group', 'client'), (0, {
+                'status': 'ready', 'expected_file_hash': writer.digest(original), 'bodies': {'work': work + '\n'}}))
+            self.assertEqual(path.read_bytes(), original)
+            for group_args, content in [
+                (('--group', 'personal'), original),
+                ((), b'### 2026.09.12\nLegacy unknown text'),
+                ((), original + b'\n<!-- /tracework:daily -->'),
+                ((), original.replace(b'### 2026.09.12', b'### 2026.09.13')),
+            ]:
+                path.write_bytes(content)
+                status, payload = inspect(*group_args)
+                self.assertEqual(status, 2)
+                self.assertNotIn('bodies', payload)
+                self.assertEqual(path.read_bytes(), content)
+
     def test_unowned_group_edits_are_preserved(self):
         base = writer.merge(b'', '2026-09-12', {'work': 'Generated', 'personal': 'Private'})
         edited = base.replace(b'Private', b'User-edited private')
@@ -144,7 +178,9 @@ class DailyReporting(unittest.TestCase):
         for day in ['20260912', '2026-W37-6', '2026-02-30']:
             with self.assertRaises(ValueError):
                 writer.merge(b'', day, {'work': 'x'})
-        for bodies in [{'all': 'x'}, {'': 'x'}, {'work': ''}, {'work': '### 2026.01.01'}, {'work': '<!-- /tracework:daily -->'}]:
+        for bodies in [{'all': 'x'}, {'': 'x'}, {'work': ''}, {'work': '### 2026.01.01'},
+                       {'work': '# 剧本｜排练准备'}, {'work': '  ## 剧本｜排练准备'},
+                       {'work': '<!-- /tracework:daily -->'}]:
             with self.assertRaises(writer.Conflict):
                 writer.merge(b'', '2026-09-12', bodies)
     def test_symlink_output_is_rejected(self):
@@ -168,6 +204,89 @@ class DailyReporting(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 writer.update(path, '2026-09-12', {'work': 'Draft'}, 'missing')
             self.assertFalse(path.parent.exists())
+
+    def test_fenced_code_comments_are_allowed_but_outer_headings_are_rejected(self):
+        for body in ['```sh\n  # deploy command\n```', '  ~~~~sh\n### example\n~~~\n## still code\n  ~~~~']:
+            with self.subTest(body=body):
+                result = writer.merge(b'', '2026-09-12', {'work': body})
+                self.assertIn(body.encode(), result)
+                for heading in ['# Title', '  ## Title', '   ###']:
+                    with self.assertRaises(writer.Conflict):
+                        writer.merge(b'', '2026-09-12', {'work': body + '\n' + heading})
+
+    def test_archive_preserves_adjacent_managed_markers(self):
+        source = writer.merge(b'', '2026-09-12', {'work': 'Work\r\nbody', 'personal': 'Private'})
+        source = source.replace(writer.END + b'\n\n<!--', writer.END + b'<!--')
+        source = source[source.index(b'### '):]
+        self.assertEqual(len(writer.validate_targets(source, '2026-09-12', ['work', 'personal'])[0]), 2)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'Daily.md'
+            path.write_bytes(source)
+            out = Path(tmp) / 'archive'
+            result = self.run_archive(path, out, '--month-filter', '2026-09')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((out / '2026-09.md').read_bytes(), source)
+            self.assertEqual(path.read_bytes(), source)
+
+    def test_archive_month_filter_isolates_unclosed_blocks(self):
+        september = writer.merge(b'', '2026-09-12', {'work': 'Work'}).lstrip(b'\n')
+        october = writer.merge(b'', '2026-10-01', {'work': 'October\n    ### 2026.09.01\nExample'}).lstrip(b'\n')
+        broken = october.replace(writer.END, b'')
+        for source in [broken + september, september + broken]:
+            with self.subTest(broken_first=source.startswith(broken)), tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / 'Daily.md'
+                path.write_bytes(source)
+                out = Path(tmp) / 'archive'
+                result = self.run_archive(path, out, '--month-filter', '2026-09')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual((out / '2026-09.md').read_bytes(), september)
+                self.assertFalse((out / '2026-10.md').exists())
+                for args in [(), ('--month-filter', '2026-10')]:
+                    result = self.run_archive(path, out, *args)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn('Unclosed managed Daily block', result.stderr)
+                    self.assertEqual(list(out.iterdir()), [out / '2026-09.md'])
+                    self.assertEqual((out / '2026-09.md').read_bytes(), september)
+                self.assertEqual(path.read_bytes(), source)
+
+    def run_archive(self, path, out, *args):
+        return subprocess.run([sys.executable, '-B', str(ROOT / 'skills/monthly/scripts/split_daily_note.py'),
+                               str(path), str(out), *args], capture_output=True, text=True, encoding='utf-8')
+
+    def test_writer_archive_monthly_round_trip_preserves_managed_bytes(self):
+        view = {'status': 'complete', 'scope': 'work', 'scope_source': 'explicit',
+                'period': {'start': '2026-09-01', 'end': '2026-09-30'}, 'groups': {}}
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / 'Daily Note.md'
+            archive = root / 'archive'
+            archive.mkdir()
+            historical = archive / '2026-07.md'
+            historical.write_bytes(b'historical\r\n')
+            path.write_bytes('### 2026.07.31\r\nJuly source\r\n## 2026年8月\r\n'
+                             '### 2026.08.31\r\nAugust\r\n'.encode())
+            body = ('#### 剧本交付\r\n交付可排练分场稿。\n    ### 2026.10.01\r\n此行是示例。'
+                    '\n```markdown\n### 2026.10.01\n```')
+            writer.update(path, '2026-09-12', {'work': body, 'personal': 'Private'},
+                          writer.digest(path.read_bytes()))
+            path.write_bytes(path.read_bytes() + b'\n### 2026.10.01\r\nOctober\r\n')
+            source = path.read_bytes()
+            self.assertEqual(writer.inspect_snapshot(path, '2026-09-12', ['work'])['bodies'], {'work': body + '\n'})
+            result = self.run_archive(path, archive, '--overwrite-policy', 'skip_existing')
+            self.assertEqual(result.returncode, 0, result.stderr)
+            summary = json.loads(result.stdout)
+            self.assertEqual(summary['months_created'], ['2026-08', '2026-09', '2026-10'])
+            self.assertEqual(summary['months_skipped'], ['2026-07'])
+            september = archive / '2026-09.md'
+            first = source.index(b'### 2026.09.12')
+            last = source.index(b'### 2026.10.01\r\nOctober')
+            self.assertEqual(september.read_bytes(), source[first:last])
+            self.assertEqual((archive / '2026-10.md').read_bytes(), source[last:])
+            self.assertEqual(historical.read_bytes(), b'historical\r\n')
+            self.assertEqual(path.read_bytes(), source)
+            signals = monthly.build_signals(view, september, '2026-09')
+            self.assertEqual([row['text'] for row in signals['editorial_context']], [body + '\n'])
+            self.assertEqual(signals['excluded_editorial'], {'managed_blocks': 1})
 
     def test_monthly_raw_old_new_none(self):
         view = {'status': 'complete', 'scope': 'work', 'scope_source': 'explicit',

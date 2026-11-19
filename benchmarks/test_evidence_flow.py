@@ -128,14 +128,12 @@ class EvidenceFlowTests(unittest.TestCase):
         for date in ('2026.08.31', '2026-08-31'):
             with self.subTest(date=date):
                 note = self.root / 'Daily Note.md'
-                body = f'### {date}\n\n- [Probe]\n  - 进展：已记录，仍待验证\n'
-                note.write_text(body, encoding='utf-8')
+                body = f'### {date}\r\n\r\n- [probe]\r\n  - 进展：已记录，仍待验证\r\n'.encode()
+                note.write_bytes(body)
                 months, _ = split.parse_daily_note(note)
-                self.assertEqual(''.join(months['2026-08']), body)
-                archive = self.root / '2026-08.md'
-                archive.write_text(''.join(months['2026-08']), encoding='utf-8')
+                archive, _ = split.write_month_file(self.root, '2026-08', months['2026-08'], 'overwrite')
+                self.assertEqual(Path(archive).read_bytes(), body)
                 view = {'status': 'complete', 'period': {'start': '2026-08-01', 'end': '2026-08-31'}, 'groups': {'work': [{'slug': 'probe', 'reporting_group': 'work'}]}}
-                archive.write_text(body.replace('[Probe]', '[probe]'), encoding='utf-8')
                 parsed = monthly.parse_monthly_file(archive, '2026-08', view)
                 self.assertEqual(len(parsed), 1)
                 self.assertIn('已记录，仍待验证', parsed[0]['text'])

@@ -17,19 +17,39 @@ import os
 import re
 import sys
 from collections import OrderedDict
-from datetime import datetime
+from datetime import date
 
 
 # --- 标题识别正则 ---
 RE_YEAR = re.compile(r'^#\s*\d{4}\s*年')
 RE_MONTH = re.compile(r'^##\s*(\d{4})\s*年\s*(\d{1,2})\s*月')
 RE_DATE = re.compile(r'^###\s*(\d{4})[.-](\d{2})[.-](\d{2})')
+OUTER_DATE = re.compile(r'###[ \t]+(\d{4})[.-](\d{2})[.-](\d{2})[ \t]*')
+FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})(.*)$')
+MANAGED_MARKER = re.compile(
+    r'<!-- tracework:daily date=(\d{4}-\d{2}-\d{2}) group=[0-9a-f]+ sha256=[0-9a-f]{64} -->\r?\n'
+    r'|(<!-- /tracework:daily -->)|tracework:daily'
+)
+
+
+def is_outer_boundary(line):
+    heading = line.rstrip('\r\n')
+    if RE_YEAR.match(heading) or RE_MONTH.match(heading):
+        return True
+    match = OUTER_DATE.fullmatch(heading)
+    if match:
+        try:
+            date(*map(int, match.groups()))
+        except ValueError:
+            return False
+        return True
+    return False
 
 # 保留月标题之前的所有内容作为文件头（如 TODO LIST 等不属于任何月份的内容）
 # 但实际上 Daily Note 结构是 年 > 月 > 日，我们按月切分即可
 
 
-def parse_daily_note(filepath):
+def parse_daily_note(filepath, month_filter=None):
     """
     解析 Daily Note.md，按月归集内容。
 
@@ -37,17 +57,46 @@ def parse_daily_note(filepath):
         OrderedDict: key 为 "YYYY-MM"，value 为该月的原始行列表（含月标题和日标题）
         list: 文件头部行（第一个月标题之前的所有行）
     """
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, 'r', encoding='utf-8', newline='') as f:
         lines = f.readlines()
 
     months = OrderedDict()
     header_lines = []
     current_month = None
     found_first_month = False
+    managed = False
+    fence = None
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
+    for line in lines:
+        if managed:
+            if fence is None and is_outer_boundary(line):
+                if month_filter is None or current_month == month_filter:
+                    raise ValueError('Unclosed managed Daily block')
+                managed = False
+                current_month = None
+            else:
+                marker = FENCE.match(line.rstrip('\r\n'))
+                if marker:
+                    if fence and marker[1].startswith(fence) and not marker[2].strip(' \t'):
+                        fence = None
+                    elif fence is None and (marker[1][0] == '~' or '`' not in marker[2]):
+                        fence = marker[1]
+
+        markers = list(MANAGED_MARKER.finditer(line))
+        if managed or markers:
+            for marker in markers:
+                if marker[1]:
+                    if managed or marker[1][:7] != current_month:
+                        raise ValueError('Unexpected managed Daily block start')
+                    managed = True
+                elif marker[2] and managed:
+                    managed = False
+                    fence = None
+                else:
+                    raise ValueError('Damaged or unmatched managed Daily marker')
+            # The marker hash covers the original body bytes, including line endings.
+            months[current_month].append(line)
+            continue
         stripped = line.strip()
 
         # 检测月标题
@@ -60,21 +109,19 @@ def parse_daily_note(filepath):
             if current_month not in months:
                 months[current_month] = []
             months[current_month].append(line)
-            i += 1
             continue
 
         # 检测年标题
         if RE_YEAR.match(stripped):
             found_first_month = True
             # 年标题不计入任何月份，但会在输出时作为上下文参考
-            i += 1
             continue
 
         # 检测日标题 —— 日标题一定属于当前月
         # 如果没有月级标题，从日期推断月份
-        if RE_DATE.match(stripped):
+        date_match = RE_DATE.match(stripped)
+        if date_match:
             found_first_month = True
-            date_match = RE_DATE.match(stripped)
             year = int(date_match.group(1))
             month = int(date_match.group(2))
             inferred_month = f"{year:04d}-{month:02d}"
@@ -84,7 +131,6 @@ def parse_daily_note(filepath):
                 if current_month not in months:
                     months[current_month] = []
             months[current_month].append(line)
-            i += 1
             continue
 
         # 如果还没遇到第一个月标题，视为文件头
@@ -98,8 +144,8 @@ def parse_daily_note(filepath):
             # 这种情况在格式规范的文件中不应出现
             header_lines.append(line)
 
-        i += 1
-
+    if managed and (month_filter is None or current_month == month_filter):
+        raise ValueError('Unclosed managed Daily block')
     return months, header_lines
 
 
@@ -120,13 +166,13 @@ def write_month_file(output_dir, month_key, lines, overwrite_policy):
         if overwrite_policy == 'skip_existing':
             return filepath, 'skipped'
         elif overwrite_policy == 'append':
-            with open(filepath, 'a', encoding='utf-8') as f:
+            with open(filepath, 'a', encoding='utf-8', newline='') as f:
                 f.write('\n')
                 f.writelines(lines)
             return filepath, 'appended'
 
     # overwrite 或文件不存在
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(filepath, 'w', encoding='utf-8', newline='') as f:
         f.writelines(lines)
 
     return filepath, 'created'
@@ -150,7 +196,10 @@ def main():
         sys.exit(1)
 
     # 解析
-    months, header_lines = parse_daily_note(args.input_file)
+    try:
+        months, header_lines = parse_daily_note(args.input_file, args.month_filter)
+    except (OSError, ValueError) as error:
+        parser.exit(1, f'{error}\n')
 
     if not months:
         print("错误：未识别到任何月份内容。请检查文件格式。", file=sys.stderr)

@@ -124,20 +124,37 @@ that capture or more work signal will improve the next run. Do not error.
    - Filter formatting, generated-bundle, and chore-only noise unless it is a
      recorded risk or release gate.
 
-5. **Synthesize state transitions.**
-   - Group entries and fallback commits by coherent work stream.
-   - Merge feature/fix/refactor entries that describe one state transition.
-   - For each reporting group or the single local lane, write one daily
-     judgment and only supported advances; one is enough for sparse evidence.
-     Put remaining meaningful work under Other activity. Thin first-run reports may use fewer headlines.
+5. **Inspect the write target, then synthesize by work goal.**
+   - For each date with eligible vault output, inspect its exact target groups
+     before drafting, even for git-only evidence or a date with no effective
+     entries. Use only the matching date/group bodies and hash returned by the
+     writer's read-only mode. Other dates or groups are outside this merge.
+   - Reconcile each old item with the selected evidence before replacing its
+     block. Follow the loss, partial-read and explicit-withdrawal rules in
+     `daily-note-writing.md`. If inspection or reconciliation blocks a write,
+     give a scoped conversation draft with the reason.
+   - Merge evidence about the same state transition. Keep independent
+     deliverables distinct and distinguish earlier same-day work from the
+     current review or recalculation. Follow the merge rules in
+     `daily-note-writing.md` within the existing read scope.
+   - For each main item, connect the concrete action and object, what the
+     deliverable contains or can be used for, and the supported new judgment or
+     change with its basis. Keep status, uncertainty, and the item's next action
+     beside the claim they qualify.
+   - Give each group or local lane one clear daily judgment when there is
+     signal. Put it in the lead item, or in a separate overview when it adds
+     independent information. Cover meaningful secondary work briefly and keep
+     standalone coordination needs visible.
    - Preserve explicit risk, conflict, open question, rejected path, and
-     evidence gaps.
+     evidence gaps. An explicit user format controls placement while keeping
+     the same content and evidence requirements.
 
 6. **Write incrementally or in conversation.**
    - Vault mode: use only `<this-skill>/scripts/update_daily_note.py` with the
      previously read whole-file hash and per-group bodies, as described in
      `daily-note-writing.md`. A conflict returns a conversation draft, never a
-     manual overwrite. Do not write an empty date section.
+     manual overwrite. Omit empty dates. A supported withdrawal notice for an
+     explicitly refreshed existing day is substantive content.
    - No-vault or local first-run conversation mode: use the conversation shape
      in `daily-note-writing.md`. Do not invent a Daily Note path.
 
@@ -154,10 +171,11 @@ Before finishing, verify:
 - Explicit scoped emptiness explains exclusion and repair, and does not leak
   unassigned content into `work`.
 - No-vault runs return conversation output without blocking on cold-start.
-- Each reporting group or local lane has one clear daily judgment when there is
-  signal.
-- Headline items describe starting situation, movement, end state, meaning, and
-  next gate when evidence supports them; git-only stays bounded.
+- Each group or local lane has a clear daily judgment when there is signal,
+  either in the lead item or in an overview that adds independent information.
+- Each main item names the action and object, explains what the deliverable
+  contributes, and states the supported change and basis. Status limits and
+  next actions stay with their own claims. Git-only evidence stays limited.
 - Remaining meaningful work is still covered when present.
 - `ongoing` and `risk` are not rewritten as completed outcomes.
 - The report is readable in about one minute per reporting group.

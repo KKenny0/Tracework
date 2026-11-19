@@ -304,6 +304,76 @@ class ReportReader(unittest.TestCase):
         old = self.read(project_slugs=['current'], as_of='2026-08-31T23:59:59+08:00')
         self.assertEqual(old['groups']['work'][0]['view']['entries'][0]['summary'], 'original')
 
+    def test_script_project_recalculation_remains_an_ordinary_scoped_fact(self):
+        delivery = {**self.fact('Delivered the rehearsal script'),
+                    'context': 'Scene order and dialogue were ready for rehearsal.'}
+        estimate = {**self.fact('Eight of ten submitted scenes passed the read-through'),
+                    'timestamp': '2026-08-25T11:00:00+08:00',
+                    'captured_at': '2026-08-25T11:00:00+08:00'}
+        estimate_id = 'raw:current:2026-W35:1'
+        revision = {**self.fact('Eight of twelve submitted scenes passed the read-through'),
+                    'timestamp': '2026-08-25T14:00:00+08:00',
+                    'captured_at': '2026-08-25T14:00:00+08:00',
+                    'context': f'Recalculated {estimate_id} on the original read-through scores. '
+                               'The 8/10 estimate omitted two submitted scenes; both fell short. '
+                               'The eight passing scenes and the rehearsal delivery still stand.'}
+        review = {**self.fact('Rechecked the count against the rehearsal log'),
+                  'timestamp': '2026-08-25T16:00:00+08:00',
+                  'captured_at': '2026-08-25T16:00:00+08:00',
+                  'context': 'Confirmed the existing count from the same data; no new evaluation ran.'}
+        records = [delivery, estimate, revision, review]
+        self.paths['current'].write_text(json.dumps(records))
+        private = self.fact('Private script delivery')
+        self.paths['private'].write_text(json.dumps([private]))
+        before = self.paths['current'].read_bytes()
+        day = '2026-08-25'
+        for report in ['daily', 'weekly', 'monthly']:
+            with self.subTest(report=report):
+                def project_view(**kwargs):
+                    return raw.read_report(self.cwd, report, day, day, **kwargs)
+
+                work = project_view(scope='work', project_slugs=['current'])
+                self.assertEqual(self.slugs(work), {'current'})
+                view = work['groups']['work'][0]['view']
+                self.assertEqual(view['correction_history'], [])
+                self.assertEqual([state.entry_id(row, 'current') for row in view['entries']],
+                                 [f'raw:current:2026-W35:{index}' for index in range(len(records))])
+                self.assertEqual([{k: v for k, v in row.items() if not k.startswith('_')}
+                                  for row in view['entries']], records)
+                old = project_view(scope='work', project_slugs=['current'], as_of='2026-08-25T12:00:00+08:00')
+                self.assertEqual([row['summary'] for row in old['groups']['work'][0]['view']['entries']],
+                                 [delivery['summary'], estimate['summary']])
+                combined = project_view(scope='all', project_slugs=['current', 'private'])
+                self.assertEqual([p['slug'] for p in combined['groups']['work']], ['current'])
+                self.assertEqual([p['slug'] for p in combined['groups']['personal']], ['private'])
+        self.assertEqual(self.paths['current'].read_bytes(), before)
+
+    def test_daily_retraction_history_identifies_work_date_and_cutoff(self):
+        original = self.fact('Declared the reading complete')
+        retract = {**self.fact('Withdrew the reading result'), 'captured_at': '2026-08-26T10:00:00+08:00',
+                   'correction': {'operation': 'retract', 'target_ref': {
+                       'week': '2026-W35', 'entry_index': 0, 'timestamp': original['timestamp']},
+                       'target_hash': state.entry_hash(original), 'reason': 'The recorded reading did not occur'}}
+        self.paths['current'].write_text(json.dumps([original, retract]))
+
+        def view(as_of):
+            result = raw.read_report(self.cwd, 'daily', '2026-08-25', '2026-08-25',
+                                     scope='work', project_slugs=['current'], as_of=as_of)
+            return result['groups']['work'][0]['view']
+
+        old = view('2026-08-25T23:59:59+08:00')
+        self.assertEqual(len(old['entries']), 1)
+        self.assertEqual(old['correction_history'], [])
+        current = view('2026-08-26T23:59:59+08:00')
+        self.assertEqual(current['entries'], [])
+        self.assertEqual(current['diagnostics'], [])
+        self.assertEqual(current['correction_history'], [{
+            'operation': 'retract', 'entry_id': 'raw:current:2026-W35:1',
+            'target_id': 'raw:current:2026-W35:0', 'logical_id': 'raw:current:2026-W35:0',
+            'timestamp': original['timestamp'], 'captured_at': retract['captured_at'],
+            'reason': retract['correction']['reason'],
+        }])
+
     def test_monthly_partial_never_writes_without_explicit_save(self):
         self.paths['other'].write_text('{broken')
         signals, skeleton = self.root / 'signals.json', self.root / 'skeleton.json'

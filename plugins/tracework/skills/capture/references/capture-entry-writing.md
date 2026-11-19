@@ -171,6 +171,40 @@ followed by implementation):
   capture records only this session's increment, leaving consolidation to
   Daily, Weekly, and Monthly reports.
 
+### Reviews, Recalculations, Evaluations, and Option Selection
+
+- Use `summary` and `context` to name what was actually reviewed, rerun,
+  evaluated, or compared and what the work newly established. For a revision or
+  withdrawal, identify the earlier conclusion, the finding that changed it, and
+  what remains usable. Distinguish a new run, a recalculation on existing data,
+  and a review of existing results. If nothing changed, record only any new
+  verification and its limits. Record the exact earlier claim (including its
+  population or denominator when material), the new result, and the decisive
+  basis for linking them. Include the exact raw reference such as
+  `raw:<slug>:<week>:<entry_index>` in `context` when verified in authorized
+  material. Use a precise description and state the missing link when the
+  reference is unknown. Preserve unresolved discrepancies when the session
+  cannot explain them.
+- Use `exploration_paths` for material comparisons and observed results. When
+  the evidence shows that different goals yield different rankings, preserve
+  each goal, what it prioritizes, and the decisive facts behind its ordering.
+  Keep the compared population, metric denominator, and decision or validation
+  status where they qualify the result. State the decisive change and critical
+  limits in `summary` or `context` so the result is legible on its own.
+- For a new or materially revised durable deliverable, use
+  `artifact_context.delta` to describe the new findings, changed conclusions,
+  or added decision guidance and what the deliverable can now support. A path
+  alone is provenance. Keep the substance in `summary` or `context` when
+  `artifact_context` does not apply.
+- Keep the routed depth. A routine `lite` entry can carry its supported
+  increment in `summary` and `context`. Use detail fields when they add material
+  evidence. Append a later recalculation as an ordinary entry at the new work
+  time, even when it overturns an earlier conclusion. Preserve the earlier
+  raw entry. Use `capture-corrections.md` only when the user explicitly asks to
+  fix a factual error in a stored raw record. That workflow needs the exact
+  effective target and its hash for `replace` or `retract`. A linked follow-up
+  alone never authorizes a `correction` object.
+
 ### Admission for Abandoned Alternatives
 
 Admitting an item into `abandoned_alternatives` requires strict evidence:

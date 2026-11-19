@@ -15,6 +15,27 @@ Daily, Weekly, and Monthly are agent-authored, so evaluation has two layers.
 These checks protect structure and audience safety. They do not claim to grade
 prose quality.
 
+## Same-Day Revision Scenario
+
+The public script-project case in `test_report_reader.py` supplies an independent
+morning rehearsal delivery, an 8/10 estimate, a recalculation to 8/12 after
+including two omitted submissions, a same-data recheck, and a personal project.
+It verifies that report readers retain ordinary entries, honor the cutoff and
+project selection, and keep groups distinct. Its retraction case separately
+verifies the exact target and the work date versus capture time.
+`test_daily_reporting.py` checks the snapshot and writer boundaries and reads a
+byte-preserved monthly archive back as editorial context.
+
+For a prose check, use the fixture facts and ask to update the target day. A
+sample work item is “交付了可直接排练的分场稿。围读通过数仍为 8 场。补入两场
+漏计且未通过的送审场次后，通过口径由 8/10 修订为 8/12。” The morning delivery
+remains identifiable, 8/10 appears as revision history, and the later recheck
+adds no new outcome. The personal delivery appears only in its own lane. A
+cutoff before the recalculation supports the morning estimate. For the separate
+explicit-refresh retraction case, check that the draft identifies the exact
+withdrawn claim and gives the recorded reason. These are prose review criteria;
+the executable checks exercise evidence and file behavior.
+
 ## Real-Output Evaluation
 
 For a dense real week, generate `work`, `personal`, and `all` views without

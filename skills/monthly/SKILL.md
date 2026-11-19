@@ -97,9 +97,10 @@ valid body hash, and an in-period date. Project-narrowed or local runs exclude
 whole-group prose. Legacy blocks require an exact selected project slug label;
 display names, unknown labels and ambiguous ownership are excluded with counts
 only. Editorial text never supplies verified completion, risks or next actions.
-Daily-only evidence supports a limited review; compare it with raw when present
-and retain disagreements as editorial conflicts. Matching Weekly reports are also optional
-editorial context. Their absence does not lower a raw claim's evidence grade.
+Daily-only evidence supports a limited review. With raw present, apply the
+shared competing-conclusions rules. Keep explained differences as revision
+history and retain unresolved editorial conflicts. Matching Weekly reports
+provide optional context. Their absence does not lower a raw claim's evidence grade.
 
 For a normal scoped vault run, save only the in-scope context to the configured
 signals/skeleton paths when useful. Never overwrite another scope's existing

@@ -127,7 +127,7 @@ def effective_records(records, slug, as_of=None):
                 active[key] = dict(record, _logical_id=logical, _question_subjects=subjects)
             history.append({'entry_id': key, 'target_id': target_key, 'logical_id': logical,
                             'operation': correction['operation'], 'reason': correction['reason'],
-                            'captured_at': record['captured_at']})
+                            'timestamp': record['timestamp'], 'captured_at': record['captured_at']})
         except (ValueError, TypeError, KeyError) as error:
             diagnostics.append(f'{key}: correction conflict: {error}')
             if target_key:

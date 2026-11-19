@@ -12,10 +12,9 @@ python <this-skill>/scripts/tracework_raw.py read-report --cwd <project-root> \
   --report <daily|weekly|monthly> --start YYYY-MM-DD --end YYYY-MM-DD
 ```
 
-Monthly calls the same reader. Pass `--scope <group-or-all>`
-only for explicit user choice, repeat `--project-slug` to narrow projects, and
-pass `--as-of` only for an explicit knowledge cutoff. Filters only narrow scope. Use returned `scope`, `scope_source`, `reason`, `groups` and failures;
-do not reconstruct the selection or read excluded projects through another path.
+Pass `--scope` and `--as-of` for explicit group and knowledge-cutoff choices.
+Repeat `--project-slug` to narrow scope. Use the returned `scope`, `scope_source`,
+`reason`, `groups` and failures. Use that selection and skip excluded projects.
 
 Scope precedence: explicit user choice → configured `profile.default_reporting_group`
 → current project's group → implicit-local. Project config overrides global
@@ -56,13 +55,10 @@ project-root filter only after recovery is explicitly selected.
 
 ## Current Conversation Evidence
 
-Daily, Weekly, and Monthly may report directly from facts already visible in
-this task. Admit a fact only when its project, reporting group (or resolved
-local lane), and work date fall within the resolved scope and period. Unknown
-project/date stays outside claims; do not infer a work date from message time.
-Use this temporary evidence alongside raw, before ranking and git fallback.
-No Capture call, raw write, project registration, transcript search, or scan
-watermark update is implied. Unsaved conversation facts are not durable memory.
+Use facts visible in this task alongside raw, before ranking or Git fallback.
+Require a selected project, matching group or local lane, and in-period work
+date. Message time cannot establish work date. Treat these facts as temporary
+without capture, raw writes, registration, transcript search or watermark updates.
 
 Deduplicate by exact entry ref, repository plus commit, or existing message
 reference first. Without an exact identifier, merge only the same state change
@@ -75,6 +71,19 @@ visible test/tool evidence supports only the specific check it demonstrates.
 Raw/conversation disagreement remains visible with both sources and a limited
 boundary; do not silently overwrite raw or pick the more optimistic claim.
 Apply audience partition to the evidence appendix as well as the body.
+
+## Competing Conclusions
+
+- Within selected project, group, period and as-of, apply effective raw
+  corrections first. Match the project, target or logical ID, and work
+  `timestamp` before citing correction history. A retraction is history only.
+- An ordinary entry can revise a judgment without changing the raw chain.
+  Prefer it when evidence identifies the exact earlier claim and explains the
+  change (including population or denominator when material). Keep the earlier
+  judgment only as revision history. Preserve independent work and stage timing.
+- Without a clear link or cause, retain the conflict and sources. A repeat
+  review adds only its supported check. Editorial context cannot restore a
+  superseded fact or override effective raw state.
 
 ## Shared Narrative Spine
 
@@ -93,37 +102,27 @@ line counts, tokens, and active days are evidence or coverage metadata.
 
 ## Clear Expression
 
-These clarity principles draw on ASD-STE100; this section neither requires nor
-certifies compliance with its controlled-English standard. Apply only the
-guidelines stated here, preserving the report's language and requested format.
-They govern human-facing Daily, Weekly and Monthly content, not raw records,
-field names or evidence references.
+These ASD-STE100-inspired rules apply to report prose. Preserve the requested
+language and format, raw fields and refs. No controlled-English compliance is
+required or certified.
 
-- **Keep names and referents consistent.** Use the same name for the same
-  project, feature or issue. Name the object when a pronoun could refer to more
-  than one thing. Preserve exact interface labels and distinct concepts.
-- **Keep conditions beside claims.** Attach prerequisites, scope, exceptions
-  and negations to the actions or results they qualify. Preserve necessary
-  versus sufficient conditions and required sequence. Limits such as "tested
-  only locally" or "production behavior remains unverified" belong beside the
-  conclusion, not only in an appendix.
-- **Preserve status and certainty.** Distinguish advice, permission,
-  requirements and capability, as well as proposed, decided, started,
-  completed and verified work. State expected benefits as expectations;
-  completion of an action does not by itself verify its effect.
-- **Shorten without losing meaning.** Remove repetition and empty wording while
-  retaining causes, boundaries and unresolved issues needed to understand the
-  result. Leave clear wording alone; do not impose short sentences, fixed word
-  limits or item counts.
-- **Describe concrete changes.** Explain the problem, the action taken and
-  what is different now. Internal analysis terms need not appear in the prose;
-  abstract wording such as "推进", "闭环" or "赋能" cannot substitute for facts.
-  Describe impacts only as far as the evidence supports them.
+- **Use consistent names.** Keep exact interface labels and distinct concepts.
+  Name the object when a pronoun could be ambiguous.
+- **Keep conditions beside claims.** Include scope, prerequisites, exceptions,
+  negations, and required sequence. Distinguish necessary and sufficient
+  conditions. Put material limits like "tested only locally" in the body.
+- **Preserve status and certainty.** Distinguish advice, permission, requirements
+  and capability. Preserve proposed, decided, started, completed and verified
+  states. Give expected benefits as expectations. An action alone proves no effect.
+- **Shorten without losing meaning.** Cut repetition while keeping causes,
+  boundaries, and unresolved issues. Leave clear wording intact and let the
+  evidence determine sentence length and item count.
+- **Describe concrete changes.** State the problem, action, result and supported
+  impact. Replace vague labels such as "推进" or "赋能" with facts.
 
-Before delivery, check whether the body alone explains what changed, what
-supports that judgment and what remains unconfirmed. Keep material limits in
-the body and detailed provenance in the evidence appendix. State evidence gaps
-rather than inventing causes, benefits or next steps.
+Check whether the body explains the change, its basis and what remains
+unconfirmed. Put detailed provenance in the appendix. State evidence gaps
+without inventing causes, benefits or next steps.
 
 ## Closure Types
 

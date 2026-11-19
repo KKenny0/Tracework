@@ -22,19 +22,32 @@ def digest(data):
 START = re.compile(rb'<!-- tracework:daily date=(\d{4}-\d{2}-\d{2}) group=([0-9a-f]+) sha256=([0-9a-f]{64}) -->\r?\n')
 END = b'<!-- /tracework:daily -->'
 DAY = re.compile(rb'^### (\d{4})[.-](\d{2})[.-](\d{2})[ \t]*\r?$', re.M)
+FENCE = re.compile(r'^ {0,3}(`{3,}|~{3,})(.*)$')
+OUTER_HEADING = re.compile(r'^ {0,3}#{1,3}(?=\s|$)')
 
 
-def merge(original, day, bodies):
+def has_outer_heading(body):
+    fence = None
+    for line in body.split('\n'):
+        marker = FENCE.match(line)
+        if fence:
+            if marker and marker[1].startswith(fence) and not marker[2].strip(' \t\r'):
+                fence = None
+        elif marker and (marker[1][0] == '~' or '`' not in marker[2]):
+            fence = marker[1]
+        elif OUTER_HEADING.match(line):
+            return True
+    return False
+
+
+def validate_targets(original, day, groups):
+    """Validate the snapshot for the exact requested write targets."""
     if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', day):
         raise Conflict('date must be YYYY-MM-DD')
     date.fromisoformat(day)
-    if not isinstance(bodies, dict) or not bodies:
-        raise Conflict('bodies must be a nonempty group-to-Markdown object')
-    for group, body in bodies.items():
+    for group in groups:
         if not isinstance(group, str) or not group.strip() or group == 'all':
             raise Conflict('use exact groups, never all')
-        if not isinstance(body, str) or not body.strip() or 'tracework:daily' in body or re.search(r'^#{1,3}\s', body, re.M):
-            raise Conflict('body must be nonempty prose without managed markers or outer headings')
     original.decode('utf-8')
     blocks = {}
     spans = []
@@ -64,7 +77,8 @@ def merge(original, day, bodies):
         outside = outside[:start] + outside[end:]
     if b'tracework:daily' in outside:
         raise Conflict('unmatched daily marker')
-    days = list(DAY.finditer(original))
+    days = [heading for heading in DAY.finditer(original)
+            if not any(start <= heading.start() < end for start, end in spans)]
     matching = [m for m in days if b'-'.join(m.groups()).decode() == day]
     if len(matching) > 1:
         raise Conflict('duplicate date heading')
@@ -72,32 +86,50 @@ def merge(original, day, bodies):
         previous = [m for m in days if m.start() < start]
         if not previous or b'-'.join(previous[-1].groups()).decode() != block_day:
             raise Conflict('block/date heading mismatch')
+    selected = {}
+    for group in groups:
+        old = blocks.get((day, group.encode().hex()))
+        if old is None:
+            continue
+        start, end, previous, stored_hash = old
+        if digest(previous) != stored_hash:
+            raise Conflict(f'user-edited block: {day}/{group}')
+        selected[group] = (start, end, previous)
+    heading_end = matching[0].end() if matching else None
+    if len(selected) < len(groups) and heading_end is not None and not any(d == day for d, _ in blocks):
+        following = re.search(rb'^#{1,3}\s', original[heading_end:], re.M)
+        end = heading_end + following.start() if following else len(original)
+        if original[heading_end:end].strip():
+            raise Conflict('legacy date content has unknown ownership')
+    return selected, heading_end
+
+
+def merge(original, day, bodies):
+    if not isinstance(bodies, dict) or not bodies:
+        raise Conflict('bodies must be a nonempty group-to-Markdown object')
+    for body in bodies.values():
+        if (not isinstance(body, str) or not body.strip() or 'tracework:daily' in body
+                or has_outer_heading(body)):
+            raise Conflict('body must be nonempty prose without managed markers or outer headings')
+    selected, heading_end = validate_targets(original, day, bodies)
     edits = []
     new_blocks = []
     for group, body in bodies.items():
         group_hex = group.encode().hex()
         payload = (body.rstrip() + '\n').encode()
         block = f'<!-- tracework:daily date={day} group={group_hex} sha256={digest(payload)} -->\n'.encode() + payload + END
-        old = blocks.get((day, group_hex))
-        if old:
-            start, end, previous, stored_hash = old
-            if digest(previous) != stored_hash:
-                raise Conflict(f'user-edited block: {day}/{group}')
+        if group in selected:
+            start, end, _ = selected[group]
             edits.append((start, end, block))
         else:
             new_blocks.append(block)
     if new_blocks:
-        if matching:
-            heading = matching[0]
-            following = re.search(rb'^#{1,3}\s', original[heading.end():], re.M)
-            end = heading.end() + following.start() if following else len(original)
-            owned = [v for (d, _), v in blocks.items() if d == day]
-            if not owned and original[heading.end():end].strip():
-                raise Conflict('legacy date content has unknown ownership')
+        payload = b'\n\n'.join(new_blocks) + b'\n'
+        if heading_end is not None:
             # Insert immediately after the heading; keep every existing byte.
-            edits.append((heading.end(), heading.end(), b'\n\n' + b'\n\n'.join(new_blocks) + b'\n'))
+            edits.append((heading_end, heading_end, b'\n\n' + payload))
         else:
-            edits.append((len(original), len(original), b'\n\n### ' + day.replace('-', '.').encode() + b'\n\n' + b'\n\n'.join(new_blocks) + b'\n'))
+            edits.append((len(original), len(original), b'\n\n### ' + day.replace('-', '.').encode() + b'\n\n' + payload))
     result = original
     for start, end, replacement in sorted(edits, reverse=True):
         result = result[:start] + replacement + result[end:]
@@ -141,20 +173,41 @@ def update(path, day, bodies, expected_hash):
     return 'updated'
 
 
+def inspect_snapshot(path, day, groups):
+    before = snapshot(Path(path))
+    selected, _ = validate_targets(before or b'', day, groups)
+    return {'status': 'ready', 'expected_file_hash': digest(before) if before is not None else 'missing',
+            'bodies': {group: body.decode() for group, (_, _, body) in selected.items()}}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--path', required=True)
     parser.add_argument('--date', required=True)
-    parser.add_argument('--bodies', required=True, help='UTF-8 JSON: exact group -> Markdown')
-    parser.add_argument('--expected-file-hash', required=True, help='SHA-256 of draft snapshot, or missing')
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--inspect', action='store_true', help='Read exact date/group bodies and snapshot hash')
+    mode.add_argument('--bodies', help='UTF-8 JSON: exact group -> Markdown')
+    parser.add_argument('--group', action='append', help='Exact group to inspect; repeat for each target group')
+    parser.add_argument('--expected-file-hash', help='SHA-256 of draft snapshot, or missing')
     args = parser.parse_args()
+    if args.inspect and (not args.group or args.expected_file_hash is not None):
+        parser.error('--inspect requires --group and takes no --expected-file-hash')
+    if not args.inspect and (args.group or args.expected_file_hash is None):
+        parser.error('--bodies requires --expected-file-hash and takes no --group')
     try:
+        if args.inspect:
+            result = inspect_snapshot(args.path, args.date, dict.fromkeys(args.group))
+            print(json.dumps(result))
+            return 0
         bodies = json.loads(Path(args.bodies).read_text(encoding='utf-8'))
         status = update(args.path, args.date, bodies, args.expected_file_hash)
         print(json.dumps({'status': status, 'path': args.path}))
         return 0
     except (OSError, ValueError) as error:
-        print(json.dumps({'status': 'conflict', 'reason': str(error), 'draft': args.bodies}))
+        result = {'status': 'conflict', 'reason': str(error)}
+        if args.bodies is not None:
+            result['draft'] = args.bodies
+        print(json.dumps(result))
         return 2
 
 

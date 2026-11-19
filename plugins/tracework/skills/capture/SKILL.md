@@ -87,7 +87,10 @@ optional fields.
      predecessors, evidence support, and remaining gates.
    - For sequential work on a shared topic, frame "inherited stage + current
      increment" without bundling feedback revisions back into initial drafts or
-     double-counting facts.
+     double-counting facts. For a review, recalculation, evaluation, or option
+     selection, preserve what actually ran, what the deliverable adds, and the
+     evidence for any revised conclusion or goal-specific ranking. Follow
+     `capture-entry-writing.md` and keep the selected depth.
    - Strictly limit `abandoned_alternatives` to explicitly evaluated and
      rejected technical routes with reasons. Never record document omissions,
      typos, or feedback additions as abandoned alternatives.

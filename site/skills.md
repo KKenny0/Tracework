@@ -18,10 +18,12 @@ conversation draft with coverage gaps and saves it only on explicit request.
 
 ### Daily
 
-`/tracework:daily [work|personal|all]` writes one daily judgment per reporting
-group, necessary progress, and the next gate in short prose. One supported
-change is enough. Protected per-date/per-group updates preserve user edits;
-a conflict returns a draft instead of overwriting the file.
+`/tracework:daily [work|personal|all]` groups short prose by work goal. The lead
+item normally states the daily judgment for its reporting group. Each item
+explains what changed and includes any supported next step. One supported
+change is enough. Updates protect user edits by date and reporting group. If an
+update conflicts with existing content, Tracework keeps the original and returns
+a draft.
 
 ### Weekly
 

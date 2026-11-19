@@ -16,9 +16,9 @@ Tracework 是面向 Codex 和 Claude Code 的本地报告插件，提供五个 s
 
 ### Daily
 
-`/tracework:daily [work|personal|all]` 为每个 reporting group 生成今日判断、必要进展和
-下一道门的短正文。一条有依据的变化也足够。更新按日期、分组保护用户手改；出现
-冲突时保留原文，返回草稿。
+`/tracework:daily [work|personal|all]` 按工作目标组织短正文，通常在每个报告分组的首条
+写出当日判断。每条说明具体变化，有依据时一并写入后续行动。一条有依据的变化也足够。
+更新按日期和报告分组保护用户手改。遇到冲突时，Tracework 保留原文并返回草稿。
 
 ### Weekly
 
